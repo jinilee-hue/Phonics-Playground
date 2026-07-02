@@ -1,0 +1,25 @@
+@import "tailwindcss";
+
+/* Tailwind v4 CSS-first 설정 — 별도 tailwind.config 없음. 플레이그라운드 sky 계열 브랜드 토큰(studio lavender와 구분) */
+@theme {
+  --color-brand-50: #f0f9ff;
+  --color-brand-100: #e0f2fe;
+  --color-brand-200: #bae6fd;
+  --color-brand-300: #7dd3fc;
+  --color-brand-400: #38bdf8;
+  --color-brand-500: #0ea5e9;
+  --color-brand-600: #0284c7;
+  --color-brand-700: #0369a1;
+  --color-brand-800: #075985;
+  --color-brand-900: #0c4a6e;
+
+  --font-sans: "Pretendard Variable", Pretendard, system-ui, "Segoe UI",
+    "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+
+  --shadow-card: 0 4px 20px rgb(14 100 183 / 0.1);
+  --shadow-modal: 0 20px 60px rgb(7 45 80 / 0.35);
+}
+
+body {
+  @apply bg-brand-50 text-gray-900 antialiased;
+}
