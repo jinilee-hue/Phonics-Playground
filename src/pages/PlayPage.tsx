@@ -176,7 +176,20 @@ function PlayStage({ item }: { item: GalleryItem }) {
         </div>
       ) : (
         <div ref={stageRef} className={`relative overflow-hidden bg-black ${stageCls}`}>
-          {(item.kind === 'html' || item.kind === 'zip') && (
+          {/* zip(SPA)은 격리된 서브도메인 오리진에서 서빙되므로 allow-same-origin이 안전 */}
+          {item.kind === 'zip' && (
+            <iframe
+              ref={iframeRef}
+              src={item.entryUrl!}
+              sandbox="allow-scripts allow-same-origin allow-modals"
+              allow="microphone; autoplay"
+              title={item.title}
+              className="h-full w-full border-0"
+            />
+          )}
+
+          {/* html(자체완결)은 opaque origin 유지 */}
+          {item.kind === 'html' && (
             <iframe
               ref={iframeRef}
               src={item.entryUrl!}
