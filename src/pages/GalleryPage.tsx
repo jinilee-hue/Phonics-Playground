@@ -3,10 +3,14 @@ import { useState } from 'react'
 import { api, ApiError } from '../api/client'
 import type { GalleryOut } from '../api/types'
 import { GameCard } from '../components/GameCard'
+import { PlayModal } from '../components/PlayModal'
 
 /** §6 갤러리 — 스튜디오 카탈로그 연동, stale/오류 상태를 배너로 안내, 제목 검색(클라이언트 필터) */
 export function GalleryPage() {
   const [query, setQuery] = useState('')
+  // 열린 플레이 모달의 콘텐츠 id(null이면 닫힘). 스냅샷이 아니라 id만 들고 아래에서
+  // ['gallery'] 캐시의 최신 item을 찾아 넘긴다 → 별점 낙관적 갱신이 모달에도 즉시 반영된다.
+  const [activeId, setActiveId] = useState<number | null>(null)
 
   const { data, error, isLoading, refetch, isFetching } = useQuery<GalleryOut>({
     queryKey: ['gallery'],
@@ -15,6 +19,7 @@ export function GalleryPage() {
 
   const q = query.trim().toLowerCase()
   const filtered = data?.items.filter((item) => item.title.toLowerCase().includes(q)) ?? []
+  const activeItem = activeId != null ? data?.items.find((i) => i.id === activeId) ?? null : null
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-8">
@@ -61,12 +66,14 @@ export function GalleryPage() {
       {filtered.length > 0 && (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((item) => (
-            <GameCard key={item.id} item={item} />
+            <GameCard key={item.id} item={item} onPlay={(it) => setActiveId(it.id)} />
           ))}
         </div>
       )}
 
       {isFetching && !isLoading && <p className="mt-4 text-center text-xs text-gray-400">갱신 중…</p>}
+
+      {activeItem && <PlayModal item={activeItem} onClose={() => setActiveId(null)} />}
     </main>
   )
 }

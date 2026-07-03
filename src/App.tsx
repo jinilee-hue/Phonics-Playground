@@ -5,7 +5,6 @@ import { homeFor, RequireRole, useMe } from './auth/auth'
 import { TopBar } from './components/TopBar'
 import { GalleryPage } from './pages/GalleryPage'
 import { LoginPage } from './pages/LoginPage'
-import { PlayPage } from './pages/PlayPage'
 
 /** /stats는 recharts(무거운 차트 라이브러리)를 포함 → 관리자 진입 시에만 로드(코드 스플릿). */
 const StatsPage = lazy(() => import('./pages/StatsPage').then((m) => ({ default: m.StatsPage })))
@@ -46,14 +45,6 @@ export default function App() {
           element={
             <Protected roles={['student', 'admin']}>
               <GalleryPage />
-            </Protected>
-          }
-        />
-        <Route
-          path="/play/:id?"
-          element={
-            <Protected roles={['student', 'admin']}>
-              <PlayPage />
             </Protected>
           }
         />

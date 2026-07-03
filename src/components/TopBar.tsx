@@ -3,13 +3,9 @@ import type { Role, User } from '../api/types'
 import { useLogout } from '../auth/auth'
 
 const TABS: Record<Role, { to: string; label: string }[]> = {
-  student: [
-    { to: '/gallery', label: '갤러리' },
-    { to: '/play', label: '플레이' },
-  ],
+  student: [{ to: '/gallery', label: '갤러리' }],
   admin: [
     { to: '/gallery', label: '갤러리' },
-    { to: '/play', label: '플레이' },
     { to: '/stats', label: '통계' },
   ],
 }

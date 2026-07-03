@@ -21,6 +21,7 @@ export interface GalleryItem {
   entryUrl: string | null
   externalUrl: string | null
   publishedAt: string | null
+  thumbUrl: string | null // 스튜디오 등록 썸네일(/c/{id}/_thumb.png). 없으면 null → 카드에서 플레이스홀더
   uses: number
   completions: number
   ratingAvg: number | null
