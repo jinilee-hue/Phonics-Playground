@@ -23,6 +23,16 @@ export interface GalleryItem {
   publishedAt: string | null
   uses: number
   completions: number
+  ratingAvg: number | null
+  ratingCount: number
+  myRating: number | null
+}
+
+/** §6 별점 평가(A) — upsert 후 갱신된 내 점수·평균·개수 */
+export interface RatingOut {
+  myRating: number
+  avg: number
+  count: number
 }
 
 /** stale=true면 카탈로그 갱신 실패로 마지막 성공본을 보여주는 중임을 의미 */

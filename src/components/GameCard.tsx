@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import type { GalleryItem, Kind } from '../api/types'
+import { StarAvg } from './StarRating'
 
 const KIND_LABEL: Record<Kind, string> = {
   html: 'HTML',
@@ -44,6 +45,9 @@ export function GameCard({ item }: { item: GalleryItem }) {
         <span className="rounded-full bg-emerald-50 px-2.5 py-1 font-semibold text-emerald-600">
           ✓ 완료 {item.completions}
         </span>
+        {item.ratingCount > 0 && item.ratingAvg != null && (
+          <StarAvg avg={item.ratingAvg} count={item.ratingCount} />
+        )}
       </div>
     </Link>
   )

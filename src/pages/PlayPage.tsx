@@ -1,9 +1,10 @@
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { api } from '../api/client'
-import type { GalleryItem, GalleryOut, PlaySession } from '../api/types'
+import type { GalleryItem, GalleryOut, PlaySession, RatingOut } from '../api/types'
 import { KindBadge } from '../components/GameCard'
+import { StarRating } from '../components/StarRating'
 import { isGameEvent } from '../play/protocol'
 import { usePlaySession } from '../play/usePlaySession'
 
@@ -211,6 +212,48 @@ function PlayStage({ item }: { item: GalleryItem }) {
           </button>
         </div>
       )}
+
+      <RatingBox item={item} />
     </main>
+  )
+}
+
+/**
+ * §6 별점 평가(A) — upsert이므로 재클릭 시 점수 변경.
+ * 서버가 돌려준 avg/count/myRating으로 공유 ['gallery'] 캐시의 해당 item만 낙관적 갱신한다.
+ * (재요청 없이 갱신 → 갤러리 전체 재집계 왕복 제거 + 재요청 실패 시 PlayStage가 에러로 교체되는 캐스케이드 회피)
+ */
+function RatingBox({ item }: { item: GalleryItem }) {
+  const queryClient = useQueryClient()
+
+  const { mutate: rate, isPending } = useMutation({
+    mutationFn: (score: number) =>
+      api.post<RatingOut>(`/api/contents/${item.id}/rate`, { score }),
+    onSuccess: (result) => {
+      queryClient.setQueryData<GalleryOut>(['gallery'], (prev) =>
+        prev
+          ? {
+              ...prev,
+              items: prev.items.map((it) =>
+                it.id === item.id
+                  ? { ...it, ratingAvg: result.avg, ratingCount: result.count, myRating: result.myRating }
+                  : it,
+              ),
+            }
+          : prev,
+      )
+    },
+  })
+
+  return (
+    <div className="mt-4 flex items-center gap-4 rounded-2xl bg-white px-4 py-3 shadow-card">
+      <span className="text-sm font-semibold text-gray-700">이 게임 어땠나요?</span>
+      <StarRating value={item.myRating} onRate={rate} disabled={isPending} />
+      {item.ratingCount > 0 && item.ratingAvg != null && (
+        <span className="ml-auto text-xs text-gray-400">
+          평균 ★ {item.ratingAvg.toFixed(1)} ({item.ratingCount}명)
+        </span>
+      )}
+    </div>
   )
 }
