@@ -35,3 +35,7 @@ dist-ssr/
 # OS
 .DS_Store
 Thumbs.db
+
+# bkit/PDCA 워크플로 상태 파일 (자동 생성)
+.bkit*
+.pdca*
