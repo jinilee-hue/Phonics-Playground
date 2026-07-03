@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import type { GalleryItem, Kind } from '../api/types'
 import { StarAvg } from './StarRating'
 
-const KIND_LABEL: Record<Kind, string> = {
+export const KIND_LABEL: Record<Kind, string> = {
   html: 'HTML',
   zip: 'ZIP',
   video: '비디오',

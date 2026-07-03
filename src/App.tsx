@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { lazy, Suspense, type ReactNode } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import type { Role } from './api/types'
 import { homeFor, RequireRole, useMe } from './auth/auth'
@@ -6,7 +6,9 @@ import { TopBar } from './components/TopBar'
 import { GalleryPage } from './pages/GalleryPage'
 import { LoginPage } from './pages/LoginPage'
 import { PlayPage } from './pages/PlayPage'
-import { StatsPage } from './pages/StatsPage'
+
+/** /stats는 recharts(무거운 차트 라이브러리)를 포함 → 관리자 진입 시에만 로드(코드 스플릿). */
+const StatsPage = lazy(() => import('./pages/StatsPage').then((m) => ({ default: m.StatsPage })))
 
 /** 역할 가드 + TopBar 셸 (§12/§16) */
 function Protected({ roles, children }: { roles: Role[]; children: ReactNode }) {
@@ -59,7 +61,11 @@ export default function App() {
           path="/stats"
           element={
             <Protected roles={['admin']}>
-              <StatsPage />
+              <Suspense
+                fallback={<div className="px-4 py-8 text-center text-gray-400">불러오는 중…</div>}
+              >
+                <StatsPage />
+              </Suspense>
             </Protected>
           }
         />

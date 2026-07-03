@@ -60,6 +60,39 @@ export interface ContentStats {
   completions: number
   avgDurationSeconds: number
   lastPlayedAt: string | null
+  ratingAvg: number | null
+  ratingCount: number
+}
+
+/** §16 대시보드 상단 KPI 요약 (관리자) */
+export interface StatsSummary {
+  totalPlays: number
+  activeLearners: number
+  activeNow: number
+  overallCompletionRate: number // 0.0~1.0
+  avgDurationSeconds: number
+  distinctContent: number
+  avgRating: number | null
+  totalRatings: number
+}
+
+/** §16 일자별 플레이 추이 (관리자) — date는 KST 기준 YYYY-MM-DD */
+export interface TrendPoint {
+  date: string
+  plays: number
+  completions: number
+}
+
+/** §16 학습자별 참여도 집계 (관리자) */
+export interface LearnerStats {
+  userId: number
+  userName: string
+  plays: number
+  distinctContent: number
+  completions: number
+  completionRate: number // 0.0~1.0
+  totalDurationSeconds: number
+  ratingsGiven: number
 }
 
 /** §16 최근 세션 (관리자) — open=미종료 세션 플래그 */
