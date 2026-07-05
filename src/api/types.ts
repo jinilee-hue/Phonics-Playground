@@ -120,8 +120,20 @@ export interface BreakdownRow {
   completions: number
 }
 
-/** §16 레벨별·스킬별 분석 — 콘텐츠 구성 + 학습 플레이 통계 */
+/** §16 레벨×스킬 교차 1셀(히트맵용) — 해당 조합의 구성/플레이/완료 */
+export interface BreakdownCell {
+  levelKey: string
+  levelLabel: string
+  skillKey: string
+  skillLabel: string
+  contentCount: number
+  plays: number
+  completions: number
+}
+
+/** §16 레벨별·스킬별 분석 — 콘텐츠 구성 + 학습 플레이 통계 + 레벨×스킬 교차 */
 export interface StatsBreakdownOut {
   byLevel: BreakdownRow[]
   bySkill: BreakdownRow[]
+  byLevelSkill: BreakdownCell[]
 }

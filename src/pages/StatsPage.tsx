@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { type CSSProperties, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
   Bar,
@@ -145,6 +145,77 @@ function BreakdownBars({ title, rows }: { title: string; rows: BreakdownRow[] })
             <Bar dataKey="completions" name="완료" fill="#10b981" radius={[6, 6, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
+      )}
+    </div>
+  )
+}
+
+/** 플레이 수 → 히트맵 셀 배경/글자색. 값이 클수록 진한 sky. 0이면 색 없음. */
+function heatStyle(plays: number, max: number): CSSProperties {
+  if (plays <= 0 || max <= 0) return {}
+  const alpha = 0.15 + 0.85 * (plays / max)
+  return { backgroundColor: `rgba(14, 165, 233, ${alpha})`, color: alpha > 0.55 ? '#fff' : '#0f172a' }
+}
+
+/** 레벨×스킬 교차 히트맵 — 행=레벨, 열=스킬, 셀 색 농도=플레이 수. 순서는 byLevel/bySkill(플레이 desc). */
+function LevelSkillHeatmap({ data }: { data: StatsBreakdownOut | undefined }) {
+  const cells = data?.byLevelSkill ?? []
+  const levels = data?.byLevel ?? [] // 행 순서
+  const skills = data?.bySkill ?? [] // 열 순서
+  const cellMap = new Map(cells.map((c) => [`${c.levelKey}__${c.skillKey}`, c]))
+  const max = cells.reduce((m, c) => Math.max(m, c.plays), 0)
+
+  return (
+    <div className="rounded-2xl bg-white p-4 shadow-card">
+      <h2 className="mb-3 text-lg font-bold text-gray-900">레벨 × 스킬 매핑 (플레이 수)</h2>
+      {cells.length === 0 ? (
+        <div className="flex h-[200px] items-center justify-center text-sm text-gray-400">
+          아직 집계된 데이터가 없습니다.
+        </div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[480px] border-separate border-spacing-1 text-sm">
+            <thead>
+              <tr>
+                <th className="px-2 py-1.5 text-left text-xs font-semibold text-gray-400">
+                  레벨 \ 스킬
+                </th>
+                {skills.map((s) => (
+                  <th key={s.key} className="px-2 py-1.5 text-center text-xs font-semibold text-gray-500">
+                    {s.label}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {levels.map((lv) => (
+                <tr key={lv.key}>
+                  <td className="whitespace-nowrap px-2 py-1.5 text-xs font-semibold text-gray-700">
+                    {lv.label}
+                  </td>
+                  {skills.map((s) => {
+                    const c = cellMap.get(`${lv.key}__${s.key}`)
+                    const plays = c?.plays ?? 0
+                    return (
+                      <td
+                        key={s.key}
+                        className="rounded-lg px-2 py-2 text-center text-xs font-semibold tabular-nums"
+                        style={heatStyle(plays, max)}
+                        title={
+                          c
+                            ? `${lv.label} · ${s.label} — 플레이 ${c.plays} · 완료 ${c.completions} · 콘텐츠 ${c.contentCount}개`
+                            : `${lv.label} · ${s.label} — 없음`
+                        }
+                      >
+                        {plays > 0 ? plays : c && c.contentCount > 0 ? '·' : ''}
+                      </td>
+                    )
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   )
@@ -327,6 +398,11 @@ export function StatsPage() {
           colors={SKILL_COLORS}
         />
         <BreakdownBars title="스킬별 플레이·완료" rows={breakdown.data?.bySkill ?? []} />
+      </section>
+
+      {/* ②-c 레벨 × 스킬 매핑 히트맵 */}
+      <section>
+        <LevelSkillHeatmap data={breakdown.data} />
       </section>
 
       {/* ③ 학습자 참여도 — 표 + 막대 */}
