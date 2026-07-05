@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { api, ApiError } from '../api/client'
 import type { GalleryOut, Kind } from '../api/types'
 import { GameCard, KIND_FILTER_LABEL } from '../components/GameCard'
@@ -29,8 +29,12 @@ export function GalleryPage() {
 
   const items = data?.items ?? []
   // 필터 옵션은 실제 로드된 데이터에서 동적 산출(하드코딩 금지) — 존재하는 값만 칩으로 노출.
-  const availableKinds = [...new Set(items.map((i) => i.kind))]
-  const availableLevels = [...new Set(items.map((i) => i.courseCode).filter((c): c is string => !!c))].sort()
+  // items가 바뀔 때만 재계산(검색어 타이핑마다 Set 재생성/정렬 방지).
+  const availableKinds = useMemo(() => [...new Set(items.map((i) => i.kind))], [items])
+  const availableLevels = useMemo(
+    () => [...new Set(items.map((i) => i.courseCode).filter((c): c is string => !!c))].sort(),
+    [items],
+  )
 
   const q = query.trim().toLowerCase()
   const filtered = items.filter(

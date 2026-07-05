@@ -1,4 +1,4 @@
-import { type CSSProperties, useMemo, useState } from 'react'
+import { type CSSProperties, useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
   Bar,
@@ -26,7 +26,7 @@ import type {
   StatsSummary,
   TrendPoint,
 } from '../api/types'
-import { KindBadge, KIND_LABEL } from '../components/GameCard'
+import { KindBadge, KIND_FILTER_LABEL } from '../components/GameCard'
 import { Pagination } from '../components/Pagination'
 import { StatCard } from '../components/StatCard'
 
@@ -80,6 +80,11 @@ const PAGE_SIZE = 10 // 표 클라이언트 페이징 페이지 크기
 function usePaged<T>(items: T[], pageSize: number) {
   const [page, setPage] = useState(1)
   const pageCount = Math.max(1, Math.ceil(items.length / pageSize))
+  // 데이터가 줄어 현재 페이지가 범위를 벗어나면 저장된 페이지 자체를 되돌린다.
+  // (표시값만 클램프하면 데이터가 다시 늘었을 때 안 보던 페이지로 튀어오름)
+  useEffect(() => {
+    if (page > pageCount) setPage(pageCount)
+  }, [page, pageCount])
   const current = Math.min(page, pageCount)
   const slice = items.slice((current - 1) * pageSize, current * pageSize)
   return { page: current, pageCount, setPage, slice }
@@ -284,7 +289,7 @@ export function StatsPage() {
     }
     return Array.from(totals.entries())
       .filter(([, value]) => value > 0)
-      .map(([kind, value]) => ({ kind, name: KIND_LABEL[kind], value, color: KIND_COLOR[kind] }))
+      .map(([kind, value]) => ({ kind, name: KIND_FILTER_LABEL[kind], value, color: KIND_COLOR[kind] }))
   }, [contents])
 
   // 인기 Top-N (플레이 수 상위) — /contents는 uses desc로 이미 정렬됨
