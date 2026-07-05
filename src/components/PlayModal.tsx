@@ -81,7 +81,7 @@ export function PlayModal({ item, onClose }: { item: GalleryItem; onClose: () =>
       onClick={onClose}
     >
       <div
-        className="flex h-[90vh] w-[90vw] flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"
+        className="flex h-[90dvh] w-[90vw] flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
@@ -198,7 +198,7 @@ function RatingBox({ item }: { item: GalleryItem }) {
   })
 
   return (
-    <div className="flex items-center gap-4 border-t border-gray-100 px-4 py-3">
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-gray-100 px-4 py-3">
       <span className="text-sm font-semibold text-gray-700">이 게임 어땠나요?</span>
       <StarRating value={item.myRating} onRate={rate} disabled={isPending} />
       {item.ratingCount > 0 && item.ratingAvg != null && (

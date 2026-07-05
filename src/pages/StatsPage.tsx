@@ -234,7 +234,7 @@ export function StatsPage() {
         <div>
           <h2 className="mb-3 text-lg font-bold text-gray-900">학습자 참여도</h2>
           <div className="overflow-x-auto rounded-2xl bg-white shadow-card">
-            <table className="w-full text-sm">
+            <table className="w-full min-w-[640px] text-sm">
               <thead>
                 <tr className="border-b border-gray-100 text-left text-xs text-gray-400">
                   <th className="px-4 py-3 font-semibold">#</th>
@@ -350,7 +350,7 @@ export function StatsPage() {
       <section>
         <h2 className="mb-3 text-lg font-bold text-gray-900">콘텐츠별 통계</h2>
         <div className="overflow-x-auto rounded-2xl bg-white shadow-card">
-          <table className="w-full text-sm">
+          <table className="w-full min-w-[640px] text-sm">
             <thead>
               <tr className="border-b border-gray-100 text-left text-xs text-gray-400">
                 <th className="px-4 py-3 font-semibold">콘텐츠</th>
@@ -415,7 +415,7 @@ export function StatsPage() {
       <section>
         <h2 className="mb-3 text-lg font-bold text-gray-900">최근 세션</h2>
         <div className="overflow-x-auto rounded-2xl bg-white shadow-card">
-          <table className="w-full text-sm">
+          <table className="w-full min-w-[640px] text-sm">
             <thead>
               <tr className="border-b border-gray-100 text-left text-xs text-gray-400">
                 <th className="px-4 py-3 font-semibold">학생</th>
