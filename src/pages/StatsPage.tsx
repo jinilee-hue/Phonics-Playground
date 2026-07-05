@@ -301,7 +301,7 @@ export function StatsPage() {
     breakdown.isError
 
   return (
-    <main className="mx-auto max-w-6xl space-y-8 px-4 py-8">
+    <main className="stats-page mx-auto max-w-6xl space-y-8 px-4 py-8">
       <header>
         <h1 className="text-2xl font-bold text-gray-900">통계 대시보드</h1>
         <p className="mt-0.5 text-sm text-gray-400">

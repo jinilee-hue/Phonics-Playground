@@ -462,6 +462,20 @@ main:not(.auth-shell) .bg-brand-50\/40 {
   backdrop-filter: blur(10px) saturate(1.08);
 }
 
+/* 통계 페이지 — 배경 위에서 카드가 흐릿하고 경계(흰 테두리)가 안 보이는 문제 해결.
+   카드를 거의 불투명하게 + 슬레이트 구분선으로 섹션이 또렷하게 나뉘도록 한다.
+   (main.stats-page로 위 글래스 오버라이드와 동일 특이도, 뒤에 선언해 우선 적용) */
+main.stats-page .bg-white.shadow-card,
+main.stats-page .rounded-2xl.bg-white,
+main.stats-page .bg-white.p-6.shadow-card,
+main.stats-page .bg-white.p-4.shadow-card,
+main.stats-page .overflow-x-auto.rounded-2xl.bg-white {
+  background-color: rgb(255 255 255 / 0.98);
+  border: 1px solid rgb(148 163 184 / 0.32);
+  box-shadow: 0 6px 22px rgb(15 23 42 / 0.08);
+  backdrop-filter: blur(6px) saturate(1.05);
+}
+
 .gallery-page {
   width: min(calc(100% - 2rem), 76rem);
   margin: 0 auto;
