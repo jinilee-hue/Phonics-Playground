@@ -110,3 +110,18 @@ export interface RecentSession {
   completed: boolean
   open: boolean
 }
+
+/** §16 레벨/스킬 차원 1버킷 — 콘텐츠 구성(개수) + 플레이/완료 집계 */
+export interface BreakdownRow {
+  key: string // course_code 또는 skill_code. 미태깅은 "__none__"
+  label: string // 표시명 — 레벨=코드, 스킬=라벨(없으면 코드), 미태깅="미분류"
+  contentCount: number
+  plays: number
+  completions: number
+}
+
+/** §16 레벨별·스킬별 분석 — 콘텐츠 구성 + 학습 플레이 통계 */
+export interface StatsBreakdownOut {
+  byLevel: BreakdownRow[]
+  bySkill: BreakdownRow[]
+}

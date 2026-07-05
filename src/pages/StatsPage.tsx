@@ -17,10 +17,12 @@ import {
 } from 'recharts'
 import { api } from '../api/client'
 import type {
+  BreakdownRow,
   ContentStats,
   Kind,
   LearnerStats,
   RecentSession,
+  StatsBreakdownOut,
   StatsSummary,
   TrendPoint,
 } from '../api/types'
@@ -72,6 +74,82 @@ const KIND_COLOR: Record<Kind, string> = {
 
 const TOP_N = 5
 
+/** 레벨 도넛 팔레트(sky 계열, 카드 .game-tag-level 색과 통일), 스킬은 violet 계열 */
+const LEVEL_COLORS = ['#0ea5e9', '#38bdf8', '#0284c7', '#7dd3fc', '#0369a1', '#bae6fd']
+const SKILL_COLORS = ['#8b5cf6', '#a78bfa', '#7c3aed', '#c4b5fd', '#6d28d9', '#ddd6fe']
+const NONE_COLOR = '#cbd5e1' // 미분류 = slate-300
+
+/** 레벨/스킬 구성 도넛 — contentCount 분포. 종류 분포 도넛과 동일 패턴 */
+function BreakdownDonut({
+  title,
+  rows,
+  colors,
+}: {
+  title: string
+  rows: BreakdownRow[]
+  colors: string[]
+}) {
+  const data = rows.filter((r) => r.contentCount > 0)
+  return (
+    <div className="rounded-2xl bg-white p-4 shadow-card">
+      <h2 className="mb-3 text-lg font-bold text-gray-900">{title}</h2>
+      {data.length === 0 ? (
+        <div className="flex h-[260px] items-center justify-center text-sm text-gray-400">
+          아직 집계된 데이터가 없습니다.
+        </div>
+      ) : (
+        <ResponsiveContainer width="100%" height={260}>
+          <PieChart>
+            <Pie
+              data={data}
+              dataKey="contentCount"
+              nameKey="label"
+              cx="50%"
+              cy="50%"
+              innerRadius={55}
+              outerRadius={85}
+              paddingAngle={2}
+            >
+              {data.map((d, i) => (
+                <Cell key={d.key} fill={d.key === '__none__' ? NONE_COLOR : colors[i % colors.length]} />
+              ))}
+            </Pie>
+            <Tooltip formatter={(value, name) => [`${value}개`, name]} />
+            <Legend />
+          </PieChart>
+        </ResponsiveContainer>
+      )}
+    </div>
+  )
+}
+
+/** 레벨/스킬 플레이·완료 막대 — 학습자 BarChart 패턴 복제(2계열) */
+function BreakdownBars({ title, rows }: { title: string; rows: BreakdownRow[] }) {
+  const data = rows.filter((r) => r.plays > 0 || r.completions > 0)
+  return (
+    <div className="rounded-2xl bg-white p-4 shadow-card">
+      <h2 className="mb-3 text-lg font-bold text-gray-900">{title}</h2>
+      {data.length === 0 ? (
+        <div className="flex h-[260px] items-center justify-center text-sm text-gray-400">
+          아직 플레이 기록이 없습니다.
+        </div>
+      ) : (
+        <ResponsiveContainer width="100%" height={260}>
+          <BarChart data={data} margin={{ top: 8, right: 12, left: -16, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+            <XAxis dataKey="label" tick={{ fontSize: 11 }} interval={0} />
+            <YAxis tick={{ fontSize: 11 }} allowDecimals={false} width={32} />
+            <Tooltip />
+            <Legend />
+            <Bar dataKey="plays" name="플레이" fill="#0ea5e9" radius={[6, 6, 0, 0]} />
+            <Bar dataKey="completions" name="완료" fill="#10b981" radius={[6, 6, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      )}
+    </div>
+  )
+}
+
 /** §16 통계 대시보드 (관리자 전용) — KPI · 추이 · 종류 분포 · 학습자 참여 · 품질 리스트 · 상세 표 */
 export function StatsPage() {
   const summary = useQuery<StatsSummary>({
@@ -109,6 +187,11 @@ export function StatsPage() {
     refetchInterval: 15000, // "진행 중" 상태 갱신
   })
 
+  const breakdown = useQuery<StatsBreakdownOut>({
+    queryKey: ['stats', 'breakdown'],
+    queryFn: () => api.get<StatsBreakdownOut>('/api/stats/breakdown'),
+  })
+
   // 콘텐츠 종류(kind)별 플레이 수 분포 — 도넛 차트용
   const kindData = useMemo(() => {
     if (!contents) return []
@@ -143,7 +226,8 @@ export function StatsPage() {
     trends.isError ||
     learners.isError ||
     contentsError ||
-    sessionsError
+    sessionsError ||
+    breakdown.isError
 
   return (
     <main className="mx-auto max-w-6xl space-y-8 px-4 py-8">
@@ -227,6 +311,22 @@ export function StatsPage() {
             </ResponsiveContainer>
           )}
         </div>
+      </section>
+
+      {/* ②-b 레벨·스킬 분석 — 구성(도넛) + 플레이·완료(막대) */}
+      <section className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <BreakdownDonut
+          title="레벨별 콘텐츠 구성"
+          rows={breakdown.data?.byLevel ?? []}
+          colors={LEVEL_COLORS}
+        />
+        <BreakdownBars title="레벨별 플레이·완료" rows={breakdown.data?.byLevel ?? []} />
+        <BreakdownDonut
+          title="스킬별 콘텐츠 구성"
+          rows={breakdown.data?.bySkill ?? []}
+          colors={SKILL_COLORS}
+        />
+        <BreakdownBars title="스킬별 플레이·완료" rows={breakdown.data?.bySkill ?? []} />
       </section>
 
       {/* ③ 학습자 참여도 — 표 + 막대 */}
