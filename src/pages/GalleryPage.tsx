@@ -22,9 +22,16 @@ export function GalleryPage() {
   const activeItem = activeId != null ? data?.items.find((i) => i.id === activeId) ?? null : null
 
   return (
-    <main className="mx-auto max-w-5xl px-4 py-8">
-      <h1 className="mb-1 text-xl font-bold text-gray-900">갤러리</h1>
-      <p className="mb-5 text-sm text-gray-500">게시된 파닉스 게임을 골라 플레이해보세요.</p>
+    <main className="gallery-page">
+      <header className="gallery-page-header">
+        <div>
+          <h1>갤러리</h1>
+          <p>게시된 파닉스 게임을 골라 플레이해보세요.</p>
+        </div>
+        {data && data.items.length > 0 && (
+          <span className="gallery-count">{filtered.length}개 게임</span>
+        )}
+      </header>
 
       <input
         type="search"
@@ -32,7 +39,7 @@ export function GalleryPage() {
         onChange={(e) => setQuery(e.target.value)}
         placeholder="게임 제목 검색"
         aria-label="게임 제목 검색"
-        className="mb-4 w-full rounded-xl bg-white px-4 py-2.5 text-sm shadow-card outline-none ring-1 ring-transparent placeholder:text-gray-400 focus:ring-brand-300"
+        className="gallery-search"
       />
 
       {data?.stale && (
@@ -64,7 +71,7 @@ export function GalleryPage() {
       )}
 
       {filtered.length > 0 && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="gallery-grid">
           {filtered.map((item) => (
             <GameCard key={item.id} item={item} onPlay={(it) => setActiveId(it.id)} />
           ))}
