@@ -22,6 +22,9 @@ export interface GalleryItem {
   externalUrl: string | null
   publishedAt: string | null
   thumbUrl: string | null // 스튜디오 등록 썸네일(/c/{id}/_thumb.png). 없으면 null → 카드에서 플레이스홀더
+  courseCode: string | null // 레벨 코드(예: ECP5). 미태깅이면 null → 필터/배지 미표시
+  skillCode: string | null // 주 스킬 코드(예: PH.LTR.ALPHABET). 미태깅이면 null
+  skillLabel: string | null // 스킬 택소노미 라벨. 택소노미 미설정 시 코드와 동일값일 수 있음
   uses: number
   completions: number
   ratingAvg: number | null

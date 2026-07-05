@@ -827,6 +827,86 @@ main:not(.auth-shell) .bg-brand-50\/40 {
   backdrop-filter: blur(8px) saturate(1.1);
 }
 
+/* 카드 내 레벨/스킬 태그 — 레벨 · 라벨 · 코드 순서로 공백을 두고 나열 */
+.game-card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.game-tag {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.22rem 0.55rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.game-tag-level {
+  background: rgb(224 242 254 / 0.9);
+  color: var(--brand-strong);
+}
+
+.game-tag-skill-label {
+  background: rgb(237 233 254 / 0.9);
+  color: #6d28d9;
+}
+
+.game-tag-skill-code {
+  background: rgb(243 244 246 / 0.9);
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 갤러리 형식·레벨 다중 필터 칩 바 */
+.gallery-filters {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+}
+
+.gallery-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.gallery-filter-label {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 900;
+  margin-right: 0.15rem;
+}
+
+.gallery-filter-chip {
+  border: 1px solid rgb(148 163 184 / 0.4);
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.8);
+  color: var(--brand-strong);
+  padding: 0.4rem 0.85rem;
+  font-size: 0.8rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.gallery-filter-chip:hover {
+  border-color: var(--brand-strong);
+}
+
+.gallery-filter-chip.is-active {
+  border-color: transparent;
+  /* 하늘색 배경과 대비되도록 진한 네이비로 — 선택 상태가 확실히 눈에 띈다 */
+  background: var(--brand-strong);
+  color: #fff;
+  box-shadow: 0 8px 18px rgb(7 89 133 / 0.35);
+}
+
 .game-card h3 {
   margin: 0;
   color: var(--ink);

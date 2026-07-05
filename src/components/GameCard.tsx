@@ -10,6 +10,16 @@ export const KIND_LABEL: Record<Kind, string> = {
   url: 'URL',
 }
 
+/** 필터 칩·카드용 친화적 형식 라벨 — 문자 그대로의 HTML/ZIP/URL 대신 사용자 친화 명칭. */
+export const KIND_FILTER_LABEL: Record<Kind, string> = {
+  html: '인터랙티브',
+  zip: '게임 패키지',
+  video: '비디오',
+  audio: '오디오',
+  url: '웹 링크',
+}
+
+
 const KIND_GRADIENT: Record<Kind, string> = {
   html: 'from-sky-400 to-sky-600',
   zip: 'from-violet-400 to-violet-600',
@@ -35,7 +45,8 @@ const KIND_THUMB_META: Record<Kind, { title: string; subtitle: string }> = {
 }
 
 export function KindBadge({ kind }: { kind: Kind }) {
-  return <span className="kind-badge">{KIND_LABEL[kind]}</span>
+  // 배지도 필터 칩과 동일한 친화적 라벨로 통일(HTML/ZIP/URL → 인터랙티브/게임 패키지/웹 링크)
+  return <span className="kind-badge">{KIND_FILTER_LABEL[kind]}</span>
 }
 
 /**
@@ -143,6 +154,18 @@ export function GameCard({
         </div>
         <h3>{item.title}</h3>
         <p>{item.description}</p>
+        {(item.courseCode || item.skillCode) && (
+          // 레벨 · 스킬 라벨 · 스킬 코드 순으로 공백을 두고 나열. 라벨이 코드와 같으면(택소노미 폴백) 라벨 생략.
+          <div className="game-card-tags">
+            {item.courseCode && <span className="game-tag game-tag-level">{item.courseCode}</span>}
+            {item.skillLabel && item.skillLabel !== item.skillCode && (
+              <span className="game-tag game-tag-skill-label">{item.skillLabel}</span>
+            )}
+            {item.skillCode && (
+              <span className="game-tag game-tag-skill-code">{item.skillCode}</span>
+            )}
+          </div>
+        )}
       </div>
       <div className="game-card-footer">
         <div className="game-card-stats">
