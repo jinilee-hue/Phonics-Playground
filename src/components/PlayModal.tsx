@@ -148,24 +148,14 @@ export function PlayModal({ item, onClose }: { item: GalleryItem; onClose: () =>
             </p>
           )}
 
-          {/* zip(SPA)은 격리된 서브도메인 오리진에서 서빙되므로 allow-same-origin이 안전 */}
-          {item.kind === 'zip' && (
+          {/* zip(SPA)·html 모두 격리된 서브도메인 오리진에서 서빙되므로 allow-same-origin이 안전
+              (마이크 활성화 포함) */}
+          {(item.kind === 'zip' || item.kind === 'html') && (
             <iframe
               ref={iframeRef}
               src={item.entryUrl!}
               sandbox="allow-scripts allow-same-origin allow-modals"
               allow="microphone; autoplay"
-              title={item.title}
-              className="h-full w-full border-0"
-            />
-          )}
-
-          {/* html(자체완결)은 opaque origin 유지 */}
-          {item.kind === 'html' && (
-            <iframe
-              ref={iframeRef}
-              src={item.entryUrl!}
-              sandbox="allow-scripts"
               title={item.title}
               className="h-full w-full border-0"
             />

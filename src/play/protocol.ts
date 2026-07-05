@@ -1,7 +1,7 @@
 /**
- * §7 샌드박스 게임 이벤트 프로토콜 — sandbox="allow-scripts" iframe은 opaque origin("null")을
- * 가지므로 postMessage의 event.origin은 무의미하다. 부모(PlayPage)는 이벤트를 신뢰하기 전에
- * 두 단계로 검증한다:
+ * §7 샌드박스 게임 이벤트 프로토콜 — 게임 iframe은 격리 서브도메인(zip/html) 오리진에서 뜨므로
+ * postMessage의 event.origin을 특정 값으로 신뢰하기 어렵다(콘텐츠마다 서브도메인이 다름).
+ * 부모(PlayPage)는 이벤트를 신뢰하기 전에 두 단계로 검증한다:
  *   1차) event.source === iframeRef.current.contentWindow — 우리가 만든 그 iframe이 보냈는지
  *        동일성(identity) 검사. origin이 아니라 창 객체 참조로 발신자를 특정한다.
  *   2차) isGameEvent(event.data) — 매직 마커 + 필드 형식 검사.
