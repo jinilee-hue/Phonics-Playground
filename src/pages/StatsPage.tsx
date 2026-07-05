@@ -1,4 +1,4 @@
-import { type CSSProperties, useMemo } from 'react'
+import { type CSSProperties, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
   Bar,
@@ -27,6 +27,7 @@ import type {
   TrendPoint,
 } from '../api/types'
 import { KindBadge, KIND_LABEL } from '../components/GameCard'
+import { Pagination } from '../components/Pagination'
 import { StatCard } from '../components/StatCard'
 
 /** mm:ss 형식 체류시간 포맷 */
@@ -73,6 +74,16 @@ const KIND_COLOR: Record<Kind, string> = {
 }
 
 const TOP_N = 5
+const PAGE_SIZE = 10 // 표 클라이언트 페이징 페이지 크기
+
+/** 배열을 클라이언트에서 페이지로 자른다. 데이터가 줄면 현재 페이지를 자동 클램프. */
+function usePaged<T>(items: T[], pageSize: number) {
+  const [page, setPage] = useState(1)
+  const pageCount = Math.max(1, Math.ceil(items.length / pageSize))
+  const current = Math.min(page, pageCount)
+  const slice = items.slice((current - 1) * pageSize, current * pageSize)
+  return { page: current, pageCount, setPage, slice }
+}
 
 /** 레벨 도넛 팔레트(sky 계열, 카드 .game-tag-level 색과 통일), 스킬은 violet 계열 */
 const LEVEL_COLORS = ['#0ea5e9', '#38bdf8', '#0284c7', '#7dd3fc', '#0369a1', '#bae6fd']
@@ -236,7 +247,7 @@ export function StatsPage() {
 
   const learners = useQuery<LearnerStats[]>({
     queryKey: ['stats', 'learners'],
-    queryFn: () => api.get<LearnerStats[]>('/api/stats/learners?limit=10'),
+    queryFn: () => api.get<LearnerStats[]>('/api/stats/learners?limit=20'),
   })
 
   const {
@@ -254,7 +265,8 @@ export function StatsPage() {
     isError: sessionsError,
   } = useQuery<RecentSession[]>({
     queryKey: ['stats', 'sessions'],
-    queryFn: () => api.get<RecentSession[]>('/api/stats/sessions?limit=50'),
+    // 최근 200건 범위 내에서 클라이언트 페이징(그 이상은 추후 서버 페이징으로 확장 가능)
+    queryFn: () => api.get<RecentSession[]>('/api/stats/sessions?limit=200'),
     refetchInterval: 15000, // "진행 중" 상태 갱신
   })
 
@@ -290,6 +302,13 @@ export function StatsPage() {
         .slice(0, TOP_N),
     [contents],
   )
+
+  // 표 클라이언트 페이징(요약 Top-N은 전체 기준 유지, 표만 페이지로 자름)
+  const learnersPaged = usePaged(learners.data ?? [], PAGE_SIZE)
+  const contentsPaged = usePaged(contents ?? [], PAGE_SIZE)
+  const sessionsPaged = usePaged(sessions ?? [], PAGE_SIZE)
+  // 학습자별 플레이 수 막대는 상위 10명만(limit 상향으로 막대가 과도해지는 것 방지)
+  const topLearners = (learners.data ?? []).slice(0, 10)
 
   const s = summary.data
   const hasError =
@@ -437,9 +456,11 @@ export function StatsPage() {
                     </td>
                   </tr>
                 )}
-                {learners.data?.map((l, i) => (
+                {learnersPaged.slice.map((l, i) => (
                   <tr key={l.userId} className="border-b border-gray-50 last:border-0">
-                    <td className="px-4 py-3 text-gray-400">{i + 1}</td>
+                    <td className="px-4 py-3 text-gray-400">
+                      {(learnersPaged.page - 1) * PAGE_SIZE + i + 1}
+                    </td>
                     <td className="px-4 py-3 font-semibold text-gray-800">{l.userName}</td>
                     <td className="px-4 py-3 text-gray-600">{l.plays}</td>
                     <td className="px-4 py-3 text-gray-600">{l.distinctContent}</td>
@@ -453,6 +474,11 @@ export function StatsPage() {
               </tbody>
             </table>
           </div>
+          <Pagination
+            page={learnersPaged.page}
+            pageCount={learnersPaged.pageCount}
+            onChange={learnersPaged.setPage}
+          />
         </div>
 
         <div className="rounded-2xl bg-white p-4 shadow-card">
@@ -463,10 +489,7 @@ export function StatsPage() {
             </div>
           ) : (
             <ResponsiveContainer width="100%" height={260}>
-              <BarChart
-                data={learners.data ?? []}
-                margin={{ top: 8, right: 12, left: -16, bottom: 0 }}
-              >
+              <BarChart data={topLearners} margin={{ top: 8, right: 12, left: -16, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                 <XAxis dataKey="userName" tick={{ fontSize: 11 }} interval={0} />
                 <YAxis tick={{ fontSize: 11 }} allowDecimals={false} width={32} />
@@ -554,7 +577,7 @@ export function StatsPage() {
                   </td>
                 </tr>
               )}
-              {contents?.map((c) => {
+              {contentsPaged.slice.map((c) => {
                 const rate = c.uses > 0 ? Math.round((c.completions / c.uses) * 100) : 0
                 return (
                   <tr key={c.contentId} className="border-b border-gray-50 last:border-0">
@@ -585,6 +608,11 @@ export function StatsPage() {
             </tbody>
           </table>
         </div>
+        <Pagination
+          page={contentsPaged.page}
+          pageCount={contentsPaged.pageCount}
+          onChange={contentsPaged.setPage}
+        />
       </section>
 
       {/* ⑥ 최근 세션 */}
@@ -617,7 +645,7 @@ export function StatsPage() {
                   </td>
                 </tr>
               )}
-              {sessions?.map((session) => (
+              {sessionsPaged.slice.map((session) => (
                 <tr key={session.id} className="border-b border-gray-50 last:border-0">
                   <td className="px-4 py-3 font-semibold text-gray-800">{session.userName}</td>
                   <td className="px-4 py-3 text-gray-600">{session.title}</td>
@@ -641,6 +669,11 @@ export function StatsPage() {
             </tbody>
           </table>
         </div>
+        <Pagination
+          page={sessionsPaged.page}
+          pageCount={sessionsPaged.pageCount}
+          onChange={sessionsPaged.setPage}
+        />
       </section>
     </main>
   )
