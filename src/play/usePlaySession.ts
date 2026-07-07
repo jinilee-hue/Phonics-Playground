@@ -2,6 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import { api } from '../api/client'
 import type { PlaySession } from '../api/types'
+import { DESIGN_MODE } from '../designMode'
 
 const HEARTBEAT_INTERVAL_MS = 15_000
 /** 체류시간 기반 자동 완료 판정 임계값 — 탭이 보이는 동안 이 시간 이상 플레이하면 complete로 간주 */
@@ -31,6 +32,7 @@ export function usePlaySession(contentId: number | null, enabled: boolean) {
     if (!session) return
 
     const endSession = () => {
+      if (DESIGN_MODE) return // 디자인 모드: raw fetch도 프록시로 안 나가게 차단
       fetch(`/api/play/sessions/${session.id}/end`, {
         method: 'POST',
         keepalive: true,
@@ -77,6 +79,7 @@ export function usePlaySession(contentId: number | null, enabled: boolean) {
     const flushOnExit = () => {
       disarmDwell()
       if (!dwellReached) return
+      if (DESIGN_MODE) return // 디자인 모드: raw fetch도 프록시로 안 나가게 차단
       fetch(`/api/play/sessions/${session.id}/events`, {
         method: 'POST',
         keepalive: true,

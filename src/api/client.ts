@@ -1,3 +1,6 @@
+import { DESIGN_MODE } from '../designMode'
+import { resolveMock } from './designMocks'
+
 /** fetch 래퍼(credentials:'include') + ApiError — studio 포팅(postForm 불필요) */
 export class ApiError extends Error {
   status: number
@@ -25,9 +28,12 @@ async function handle<T>(res: Response): Promise<T> {
 
 export const api = {
   get<T>(path: string): Promise<T> {
+    // 디자인 모드: 백엔드 대신 목업 반환 → /api 프록시 요청 자체를 막아 ECONNREFUSED 방지
+    if (DESIGN_MODE) return Promise.resolve(resolveMock('GET', path) as T)
     return fetch(path, { credentials: 'include' }).then((r) => handle<T>(r))
   },
   post<T>(path: string, body?: unknown): Promise<T> {
+    if (DESIGN_MODE) return Promise.resolve(resolveMock('POST', path, body) as T)
     return fetch(path, {
       method: 'POST',
       credentials: 'include',

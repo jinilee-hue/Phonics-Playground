@@ -3,17 +3,27 @@ import type { ReactNode } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
 import { api, ApiError } from '../api/client'
 import type { Role, User } from '../api/types'
+import { DESIGN_MODE, DESIGN_USER } from '../designMode'
+
+/** demo2 계정은 모든 권한이 보이도록 admin으로 취급 */
+const ALL_ACCESS_EMAILS = ['demo2@test.com']
 
 export function useMe() {
   return useQuery<User | null>({
     queryKey: ['me'],
     queryFn: async () => {
+      // 디자인 모드: 백엔드 없이도 동작하도록 네트워크 호출 없이 가상 관리자 반환
+      // (백엔드 미기동 시 /api/auth/me 프록시 ECONNREFUSED 방지)
+      if (DESIGN_MODE) return DESIGN_USER
+      let user: User | null = null
       try {
-        return await api.get<User>('/api/auth/me')
+        user = await api.get<User>('/api/auth/me')
       } catch (e) {
-        if (e instanceof ApiError && e.status === 401) return null
-        throw e
+        if (!(e instanceof ApiError && e.status === 401)) throw e
       }
+      // demo2 계정 등은 모든 권한 노출을 위해 admin으로 승격
+      if (user && ALL_ACCESS_EMAILS.includes(user.email)) user = { ...user, role: 'admin' }
+      return user
     },
     staleTime: 60_000,
     retry: false,
@@ -44,6 +54,8 @@ export function RequireRole({ roles, children }: { roles: Role[]; children: Reac
   const location = useLocation()
 
   if (isLoading) return <CenterNotice>불러오는 중…</CenterNotice>
+  // 디자인 작업용 — 로그인/권한 체크를 우회하고 모든 페이지를 렌더 (DESIGN_MODE 참고)
+  if (DESIGN_MODE) return <>{children}</>
   if (!me) return <Navigate to="/login" state={{ from: location.pathname }} replace />
   if (!roles.includes(me.role)) return <Navigate to={homeFor(me.role)} replace />
   return <>{children}</>

@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -E \"\\\\.\\(tsx|css\\)$\")",
+      "Bash(npm run *)",
+      "Skill(gstack-browse)",
+      "Bash(/Users/nang-gu/.claude/skills/gstack/browse/dist/browse goto *)",
+      "Bash(/Users/nang-gu/.claude/skills/gstack/browse/dist/browse viewport *)",
+      "Bash(/Users/nang-gu/.claude/skills/gstack/browse/dist/browse screenshot *)",
+      "Bash(/Users/nang-gu/.claude/skills/gstack/browse/dist/browse snapshot *)",
+      "Bash(/Users/nang-gu/.claude/skills/gstack/browse/dist/browse url *)",
+      "Bash(/Users/nang-gu/.claude/skills/gstack/browse/dist/browse click *)",
+      "Bash(/Users/nang-gu/.claude/skills/gstack/browse/dist/browse fill *)",
+      "Bash(/Users/nang-gu/.claude/skills/gstack/browse/dist/browse js *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(npx tsc *)"
+    ]
+  }
+}
