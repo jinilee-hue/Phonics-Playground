@@ -1,13 +1,10 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
-import { api } from '../api/client'
-import type { GalleryItem, GalleryOut, RatingOut } from '../api/types'
-import { KindBadge } from './GameCard'
-import { StarRating } from './StarRating'
+import type { GalleryItem } from '../api/types'
+import { GameReviewModal } from './GameReviewModal'
 import { isGameEvent } from '../play/protocol'
 import { usePlaySession } from '../play/usePlaySession'
 
-/** 외부 URL을 모달 iframe에 임베드 가능한 형태로 변환한다.
+/** 외부 URL을 iframe에 임베드 가능한 형태로 변환한다.
  * YouTube/Vimeo는 전용 embed URL로 바꾼다(watch URL은 X-Frame-Options로 임베드 불가).
  * 그 외 URL은 그대로 시도한다(프레이밍 허용 시 표시, 아니면 '새 탭에서 열기' fallback 사용). */
 function toEmbedUrl(url: string): string {
@@ -35,22 +32,24 @@ function toEmbedUrl(url: string): string {
 }
 
 /**
- * §6/§7 플레이 모달 — 갤러리 카드 클릭 시 화면 ~90%를 덮는 오버레이에서 게임을 재생한다.
- * 기존 PlayPage의 PlayStage + RatingBox 로직을 그대로 이전했다(유일한 재생·세션·별점 경로).
- * 모달 마운트=세션 시작, 언마운트=세션 종료 → uses/completions/체류시간 통계가 계속 수집된다.
+ * §6/§7 플레이 화면 — 갤러리 카드 클릭 시 화면 전체(풀스크린)로 게임을 재생한다.
+ * 헤더/푸터 없이 게임만 표시하고, 우상단 플로팅 닫기(✕)·우하단 전체화면 버튼만 오버레이한다.
+ * 마운트=세션 시작, 언마운트=세션 종료 → uses/completions/체류시간 통계 수집.
+ * 닫기(✕·Esc) 시 게임 위에 리뷰 팝업(GameReviewModal)을 띄운다.
  */
 export function PlayModal({ item, onClose }: { item: GalleryItem; onClose: () => void }) {
-  // 모든 kind를 모달 안에서 재생/임베드하므로 세션·하트비트로 use·체류시간을 집계한다.
   const { session, sendEvent } = usePlaySession(item.id, true)
 
   const stageRef = useRef<HTMLDivElement>(null)
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
+  // 게임 종료 시 게임 위에 리뷰 팝업을 먼저 띄운다(무조건). 닫기=리뷰 표시.
+  const [reviewing, setReviewing] = useState(false)
 
-  // Esc로 닫기 + 배경 스크롤 잠금
+  // Esc로 리뷰 열기 + 배경 스크롤 잠금
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (e.key === 'Escape' && !document.fullscreenElement) onClose()
+      if (e.key === 'Escape' && !document.fullscreenElement) setReviewing(true)
     }
     document.addEventListener('keydown', onKey)
     const prevOverflow = document.body.style.overflow
@@ -59,7 +58,7 @@ export function PlayModal({ item, onClose }: { item: GalleryItem; onClose: () =>
       document.removeEventListener('keydown', onKey)
       document.body.style.overflow = prevOverflow
     }
-  }, [onClose])
+  }, [])
 
   useEffect(() => {
     function onFullscreenChange() {
@@ -91,142 +90,90 @@ export function PlayModal({ item, onClose }: { item: GalleryItem; onClose: () =>
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
-      onClick={onClose}
+      ref={stageRef}
+      className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-black"
+      role="dialog"
+      aria-modal="true"
+      aria-label={item.title}
     >
-      <div
-        className="flex h-[90dvh] w-[90vw] flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
-        role="dialog"
-        aria-modal="true"
-        aria-label={item.title}
+      {/* url — 외부 링크 임베드(YouTube/Vimeo는 embed URL로 변환).
+          X-Frame-Options로 임베드가 막히는 사이트는 아래 '새 탭에서 열기'로 대체 */}
+      {item.kind === 'url' && item.externalUrl && (
+        <>
+          <iframe
+            src={toEmbedUrl(item.externalUrl)}
+            title={item.title}
+            sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"
+            allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
+            className="h-full w-full border-0"
+          />
+          <a
+            href={item.externalUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="absolute bottom-4 left-4 rounded-lg bg-black/60 px-3 py-1.5 text-xs font-semibold text-white hover:bg-black/80"
+          >
+            안 보이면 새 탭에서 열기 ↗
+          </a>
+        </>
+      )}
+
+      {item.kind === 'url' && !item.externalUrl && (
+        <p className="px-8 text-center text-sm text-white/80">
+          이 외부 콘텐츠에는 열 수 있는 링크가 없습니다.
+        </p>
+      )}
+
+      {/* zip(SPA)·html — 격리 서브도메인 오리진에서 서빙되므로 allow-same-origin 안전(마이크 포함) */}
+      {(item.kind === 'zip' || item.kind === 'html') && (
+        <iframe
+          ref={iframeRef}
+          src={item.entryUrl!}
+          sandbox="allow-scripts allow-same-origin allow-modals"
+          allow="microphone; autoplay"
+          title={item.title}
+          className="h-full w-full border-0"
+        />
+      )}
+
+      {item.kind === 'video' && (
+        <video
+          src={item.entryUrl!}
+          controls
+          className="max-h-full max-w-full"
+          onEnded={() => session && sendEvent(`media-ended-${session.id}`, 'complete')}
+        />
+      )}
+
+      {item.kind === 'audio' && (
+        <audio
+          src={item.entryUrl!}
+          controls
+          className="w-full max-w-lg px-4"
+          onEnded={() => session && sendEvent(`media-ended-${session.id}`, 'complete')}
+        />
+      )}
+
+      {/* 플로팅 닫기(✕) — 헤더 바 대신 게임 위 우상단 */}
+      <button
+        onClick={() => setReviewing(true)}
+        aria-label="닫기"
+        className="absolute right-4 top-4 z-10 grid h-11 w-11 place-items-center rounded-full bg-black/45 text-xl leading-none text-white backdrop-blur transition hover:bg-black/65"
       >
-        <header className="flex items-center gap-3 border-b border-gray-100 px-4 py-3">
-          <KindBadge kind={item.kind} />
-          <h2 className="truncate text-lg font-bold text-gray-900">{item.title}</h2>
-          <button
-            onClick={onClose}
-            aria-label="닫기"
-            className="ml-auto rounded-lg px-2.5 py-1 text-xl leading-none text-gray-400 hover:bg-gray-100 hover:text-gray-700"
-          >
-            ✕
-          </button>
-        </header>
+        ✕
+      </button>
 
-        <div
-          ref={stageRef}
-          className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden bg-black"
-        >
-          {/* url — 외부 링크를 모달 안에서 임베드(YouTube/Vimeo는 embed URL로 변환).
-              sandbox로 상위 창 탈취를 막고(allow-top-navigation 미부여),
-              X-Frame-Options로 임베드가 막히는 사이트는 아래 '새 탭에서 열기'로 대체 */}
-          {item.kind === 'url' && item.externalUrl && (
-            <>
-              <iframe
-                src={toEmbedUrl(item.externalUrl)}
-                title={item.title}
-                sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"
-                allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
-                className="h-full w-full border-0"
-              />
-              {/* 프레이밍을 막는 사이트(빈 화면) 대비 항상 보이는 대체 링크 */}
-              <a
-                href={item.externalUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="absolute bottom-3 left-3 rounded-lg bg-black/60 px-3 py-1.5 text-xs font-semibold text-white hover:bg-black/80"
-              >
-                안 보이면 새 탭에서 열기 ↗
-              </a>
-            </>
-          )}
+      {/* 플로팅 전체화면 토글 */}
+      <button
+        onClick={toggleFullscreen}
+        className="absolute bottom-4 right-4 z-10 rounded-lg bg-black/45 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur transition hover:bg-black/65"
+      >
+        {isFullscreen ? '전체화면 종료' : '전체화면'}
+      </button>
 
-          {/* url인데 링크가 없는 경우 — 빈 검정 화면 대신 안내 표시 */}
-          {item.kind === 'url' && !item.externalUrl && (
-            <p className="px-8 text-center text-sm text-white/80">
-              이 외부 콘텐츠에는 열 수 있는 링크가 없습니다.
-            </p>
-          )}
-
-          {/* zip(SPA)·html 모두 격리된 서브도메인 오리진에서 서빙되므로 allow-same-origin이 안전
-              (마이크 활성화 포함) */}
-          {(item.kind === 'zip' || item.kind === 'html') && (
-            <iframe
-              ref={iframeRef}
-              src={item.entryUrl!}
-              sandbox="allow-scripts allow-same-origin allow-modals"
-              allow="microphone; autoplay"
-              title={item.title}
-              className="h-full w-full border-0"
-            />
-          )}
-
-          {item.kind === 'video' && (
-            <video
-              src={item.entryUrl!}
-              controls
-              className="max-h-full max-w-full"
-              onEnded={() => session && sendEvent(`media-ended-${session.id}`, 'complete')}
-            />
-          )}
-
-          {item.kind === 'audio' && (
-            <audio
-              src={item.entryUrl!}
-              controls
-              className="w-full max-w-lg px-4"
-              onEnded={() => session && sendEvent(`media-ended-${session.id}`, 'complete')}
-            />
-          )}
-
-          <button
-            onClick={toggleFullscreen}
-            className="absolute bottom-3 right-3 rounded-lg bg-black/60 px-3 py-1.5 text-xs font-semibold text-white hover:bg-black/80"
-          >
-            {isFullscreen ? '닫기' : '전체화면'}
-          </button>
-        </div>
-
-        <RatingBox item={item} />
-      </div>
-    </div>
-  )
-}
-
-/**
- * §6 별점 평가(A) — upsert이므로 재클릭 시 점수 변경.
- * 서버가 돌려준 avg/count/myRating으로 공유 ['gallery'] 캐시의 해당 item만 낙관적 갱신한다.
- * (재요청 없이 갱신 → 갤러리 전체 재집계 왕복 제거. 모달 뒤 카드에도 즉시 반영된다.)
- */
-function RatingBox({ item }: { item: GalleryItem }) {
-  const queryClient = useQueryClient()
-
-  const { mutate: rate, isPending } = useMutation({
-    mutationFn: (score: number) => api.post<RatingOut>(`/api/contents/${item.id}/rate`, { score }),
-    onSuccess: (result) => {
-      queryClient.setQueryData<GalleryOut>(['gallery'], (prev) =>
-        prev
-          ? {
-              ...prev,
-              items: prev.items.map((it) =>
-                it.id === item.id
-                  ? { ...it, ratingAvg: result.avg, ratingCount: result.count, myRating: result.myRating }
-                  : it,
-              ),
-            }
-          : prev,
-      )
-    },
-  })
-
-  return (
-    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-gray-100 px-4 py-3">
-      <span className="text-sm font-semibold text-gray-700">이 게임 어땠나요?</span>
-      <StarRating value={item.myRating} onRate={rate} disabled={isPending} />
-      {item.ratingCount > 0 && item.ratingAvg != null && (
-        <span className="ml-auto text-xs text-gray-400">
-          평균 ★ {item.ratingAvg.toFixed(1)} ({item.ratingCount}명)
-        </span>
+      {/* 게임 종료 시 게임 위에서 뜨는 리뷰 팝업 */}
+      {reviewing && (
+        <GameReviewModal item={item} onCancel={() => setReviewing(false)} onDone={onClose} />
       )}
     </div>
   )
