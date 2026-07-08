@@ -6,7 +6,8 @@ import type { GalleryOut, Role, User } from '../api/types'
 import { useLogout } from '../auth/auth'
 import { LevelSelect } from './LevelSelect'
 import { SettingsModal } from './SettingsModal'
-import { useT } from '../i18n'
+import { useLang, useT } from '../i18n'
+import { translateContent } from '../contentI18n'
 import logoUrl from '../assets/logo.png'
 
 const TABS: Record<Role, { to: string; labelKey: string }[]> = {
@@ -21,6 +22,7 @@ const ROLE_KEY: Record<Role, string> = { student: 'role.student', admin: 'role.a
 
 export function TopBar({ user }: { user: User }) {
   const t = useT()
+  const lang = useLang()
   const navigate = useNavigate()
   const logout = useLogout()
   const location = useLocation()
@@ -39,13 +41,27 @@ export function TopBar({ user }: { user: User }) {
       [...new Set((data?.items ?? []).map((i) => i.courseCode).filter((c): c is string => !!c))].sort(),
     [data],
   )
+  // 게임학습종류 = 카드 태그의 skillLabel(예: 알파벳 인지). 코드와 같으면(택소노미 폴백) 제외.
+  const skills = useMemo(
+    () =>
+      [
+        ...new Set(
+          (data?.items ?? [])
+            .filter((i) => i.skillLabel && i.skillLabel !== i.skillCode)
+            .map((i) => i.skillLabel as string),
+        ),
+      ].sort(),
+    [data],
+  )
   const selectedLevel = searchParams.get('level') ?? ''
+  const selectedSkill = searchParams.get('skill') ?? ''
 
-  const setLevel = (value: string) => {
+  // URL 쿼리 파라미터 하나를 갱신(빈 값이면 제거) — GalleryPage와 상태 공유.
+  const setParam = (key: string, value: string) => {
     setSearchParams(
       (prev) => {
         const next = new URLSearchParams(prev)
-        value ? next.set('level', value) : next.delete('level')
+        value ? next.set(key, value) : next.delete(key)
         return next
       },
       { replace: true },
@@ -73,10 +89,21 @@ export function TopBar({ user }: { user: User }) {
             <LevelSelect
               ariaLabel={t('topbar.levelFilter')}
               value={selectedLevel}
-              onChange={setLevel}
+              onChange={(v) => setParam('level', v)}
               options={[
                 { value: '', label: t('level.all') },
                 ...levels.map((level) => ({ value: level, label: level })),
+              ]}
+            />
+          )}
+          {onGallery && skills.length > 0 && (
+            <LevelSelect
+              ariaLabel={t('topbar.skillFilter')}
+              value={selectedSkill}
+              onChange={(v) => setParam('skill', v)}
+              options={[
+                { value: '', label: t('skill.all') },
+                ...skills.map((skill) => ({ value: skill, label: translateContent(skill, lang) })),
               ]}
             />
           )}

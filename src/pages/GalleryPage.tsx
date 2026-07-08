@@ -28,6 +28,28 @@ function useColumns(): number {
   return cols
 }
 
+/**
+ * 페이지(perPage열 × 2행) 단위로 "행 우선"(윗줄을 가로로 먼저 채우고 아랫줄) 배치용으로 재배열한다.
+ * 그리드가 열 우선(grid-auto-flow: column, 2행)이라 열마다 [윗줄, 아랫줄] 순으로 넣는다.
+ * 윗줄은 perPage 열까지 먼저 채우고, 해당 열의 아랫줄이 비면 null(빈 칸)을 넣어
+ * 다음 카드가 아래가 아닌 옆 열로 가도록 한다(예: 2개면 윗줄에 가로로 나란히).
+ */
+function toRowMajorOrder<T>(items: T[], perPage: number): (T | null)[] {
+  const cols = Math.max(1, perPage)
+  const pageSize = cols * 2
+  const out: (T | null)[] = []
+  for (let p = 0; p < items.length; p += pageSize) {
+    const page = items.slice(p, p + pageSize)
+    const top = page.slice(0, cols)
+    const bottom = page.slice(cols)
+    for (let c = 0; c < top.length; c++) {
+      out.push(top[c]) // 윗줄
+      out.push(c < bottom.length ? bottom[c] : null) // 아랫줄(없으면 빈 칸)
+    }
+  }
+  return out
+}
+
 /** §6 갤러리 — 페이지 캐러셀(각 페이지 첫 카드 좌측 정렬 + 다음 카드 peek), 레벨 필터(TopBar, URL ?level) */
 export function GalleryPage() {
   const t = useT()
@@ -42,7 +64,11 @@ export function GalleryPage() {
 
   const items = data?.items ?? []
   const level = searchParams.get('level') ?? ''
-  const filtered = items.filter((item) => level === '' || item.courseCode === level)
+  const skill = searchParams.get('skill') ?? ''
+  const filtered = items.filter(
+    (item) =>
+      (level === '' || item.courseCode === level) && (skill === '' || item.skillLabel === skill),
+  )
   const activeItem = activeId != null ? items.find((i) => i.id === activeId) ?? null : null
 
   // 캐러셀 계산 — 2행이므로 열 개수 = ceil(항목/2). 한 페이지 = perPage(열) × 2행.
@@ -51,8 +77,8 @@ export function GalleryPage() {
   const pageCount = Math.max(1, Math.ceil(numCols / perPage))
   const safePage = Math.min(page, pageCount - 1)
 
-  // 레벨 필터가 바뀌면 첫 페이지로.
-  useEffect(() => setPage(0), [level])
+  // 레벨·학습종류 필터가 바뀌면 첫 페이지로.
+  useEffect(() => setPage(0), [level, skill])
 
   // 열 1개 폭(카드폭 + gap)을 실측 → 정확한 px 이동량 계산(마지막 페이지도 좌측 정렬).
   const trackRef = useRef<HTMLDivElement>(null)
@@ -85,6 +111,8 @@ export function GalleryPage() {
   }
 
   const offset = safePage * perPage * stride
+  // 윗줄(가로)부터 채우고 아랫줄로 이어지도록 페이지 단위 재배열
+  const displayItems = toRowMajorOrder(filtered, perPage)
 
   return (
     <main className="gallery-page">
@@ -123,11 +151,16 @@ export function GalleryPage() {
             className="gallery-track"
             style={{ transform: `translateX(${-offset}px)` }}
           >
-            {filtered.map((item) => (
-              <div className="gallery-cell" key={item.id}>
-                <GameCard item={item} onPlay={(it) => setActiveId(it.id)} />
-              </div>
-            ))}
+            {displayItems.map((item, i) =>
+              item ? (
+                <div className="gallery-cell" key={item.id}>
+                  <GameCard item={item} onPlay={(it) => setActiveId(it.id)} />
+                </div>
+              ) : (
+                // 아랫줄 빈 칸 — 그리드 열 정렬 유지용(다음 카드가 옆 열로 가도록)
+                <div className="gallery-cell" key={`empty-${i}`} aria-hidden="true" />
+              ),
+            )}
           </div>
         </div>
       )}
@@ -152,7 +185,7 @@ export function GalleryPage() {
                   <path
                     d="M15 5l-7 7 7 7"
                     stroke="currentColor"
-                    strokeWidth="4"
+                    strokeWidth="2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
                   />
@@ -184,7 +217,7 @@ export function GalleryPage() {
                   <path
                     d="M9 5l7 7-7 7"
                     stroke="currentColor"
-                    strokeWidth="4"
+                    strokeWidth="2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
                   />
