@@ -45,7 +45,7 @@ function HomeRedirect() {
 
 export default function App() {
   return (
-    <BrowserRouter basename={import.meta.env.BASE_URL}>
+    <BrowserRouter>
       {/* 화면 전체 고정 배경 동영상(콘텐츠 뒤) */}
       <video
         className="app-bg-video"
