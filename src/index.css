@@ -72,11 +72,15 @@ body {
   pointer-events: none;
 }
 
-button,
-input,
-select,
-textarea {
-  font: inherit;
+/* @layer base로 감싸야 Tailwind 유틸리티(text-[..], font-* 등)가 이긴다.
+   레이어 밖이면 unlayered 규칙이 유틸리티보다 우선해 버튼 글자 크기가 안 먹힘. */
+@layer base {
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+  }
 }
 
 button {

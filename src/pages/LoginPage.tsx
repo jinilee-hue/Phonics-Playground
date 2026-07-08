@@ -1,18 +1,91 @@
 import { useQueryClient } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { api } from '../api/client'
-import type { Role, User } from '../api/types'
+import type { User } from '../api/types'
 import { homeFor } from '../auth/auth'
+import { useT } from '../i18n'
+import logoUrl from '../assets/logo.png'
+import bgUrl from '../assets/login-bg.png'
+import charactersSprite from '../assets/login-characters-anim.png'
 
-const inputCls = 'auth-input'
+// 캐릭터 스프라이트 시트: 6열 × 6행 = 36프레임(각 622×450), 프레임당 50ms
+const SPRITE_COLS = 6
+const SPRITE_ROWS = 6
+const SPRITE_FRAMES = 36
+const SPRITE_FRAME_MS = 50
 
+/** 스프라이트 프레임을 순환 재생해 캐릭터가 움직이게(눈 깜박임 등) 한다. */
+function CharacterSprite({ className }: { className?: string }) {
+  const [frame, setFrame] = useState(0)
+  useEffect(() => {
+    const id = window.setInterval(
+      () => setFrame((f) => (f + 1) % SPRITE_FRAMES),
+      SPRITE_FRAME_MS,
+    )
+    return () => window.clearInterval(id)
+  }, [])
+  const col = frame % SPRITE_COLS
+  const row = Math.floor(frame / SPRITE_COLS)
+  return (
+    <div
+      aria-hidden="true"
+      className={className}
+      style={{
+        backgroundImage: `url(${charactersSprite})`,
+        backgroundSize: `${SPRITE_COLS * 100}% ${SPRITE_ROWS * 100}%`,
+        backgroundPosition: `${(col / (SPRITE_COLS - 1)) * 100}% ${(row / (SPRITE_ROWS - 1)) * 100}%`,
+        backgroundRepeat: 'no-repeat',
+      }}
+    />
+  )
+}
+
+const ICON_ID = (
+  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className="h-5 w-5">
+    <circle cx="12" cy="8" r="3.6" stroke="currentColor" strokeWidth="2" />
+    <path d="M5 20c0-3.6 3.1-6 7-6s7 2.4 7 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+  </svg>
+)
+
+const ICON_PW = (
+  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className="h-5 w-5">
+    <rect x="4.5" y="10.5" width="15" height="9.5" rx="2.5" stroke="currentColor" strokeWidth="2" />
+    <path d="M8 10.5V8a4 4 0 0 1 8 0v2.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+  </svg>
+)
+
+const ICON_EYE = (
+  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className="h-5 w-5">
+    <path
+      d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinejoin="round"
+    />
+    <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2" />
+  </svg>
+)
+
+const ICON_EYE_OFF = (
+  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className="h-5 w-5">
+    <path
+      d="M4 12s3.5-6.5 8-6.5c1.2 0 2.3.3 3.3.8M20 12s-1 1.9-2.8 3.5M9.5 9.6A3 3 0 0 0 12 15c.5 0 .9-.1 1.3-.3M4 4l16 16"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+)
+
+/** 로그인 화면 (Figma login) — 캔디랜드 배경 위 흰 카드, ID/비밀번호 입력. 파란색은 리스트와 동일(#0ea5e9). */
 export function LoginPage() {
-  const [mode, setMode] = useState<'login' | 'signup'>('login')
-  const [email, setEmail] = useState('')
+  const t = useT()
+  const [id, setId] = useState(() => localStorage.getItem('savedId') ?? '')
   const [password, setPassword] = useState('')
-  const [name, setName] = useState('')
-  const [role, setRole] = useState<Role>('student')
+  const [showPw, setShowPw] = useState(false)
+  const [rememberId, setRememberId] = useState(() => !!localStorage.getItem('savedId'))
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
 
@@ -25,122 +98,148 @@ export function LoginPage() {
     setError('')
     setBusy(true)
     try {
-      const user =
-        mode === 'login'
-          ? await api.post<User>('/api/auth/login', { email, password })
-          : await api.post<User>('/api/auth/signup', { email, password, name, role })
+      const user = await api.post<User>('/api/auth/login', { email: id, password })
+      if (rememberId) localStorage.setItem('savedId', id)
+      else localStorage.removeItem('savedId')
       qc.setQueryData(['me'], user)
       const from = (location.state as { from?: string } | null)?.from
       navigate(from ?? homeFor(user.role), { replace: true })
     } catch (err) {
-      setError(err instanceof Error ? err.message : '요청을 처리하지 못했습니다.')
+      setError(err instanceof Error ? err.message : '로그인에 실패했습니다.')
     } finally {
       setBusy(false)
     }
   }
 
+  const fieldCls =
+    'h-12 w-full rounded-full border border-[#c3e0f5] bg-[#eaf4fd] pl-12 text-[20px] text-[#102a43] placeholder:text-[#8fbfe0] focus:border-[#0ea5e9] focus:outline-none'
+
   return (
-    <main className="auth-shell">
-      <section className="auth-copy-panel" aria-label="Phonics Playground">
-        <div className="auth-kicker">Learning Game Playground</div>
-        <h1>
-          PHONICS <span>PLAYGROUND</span>
-        </h1>
-        <p>아이들이 게임을 하며 파닉스 지식을 얻는 공간이에요.</p>
-        <div className="auth-badges" aria-hidden="true">
-          <span>Play</span>
-          <span>Learn</span>
-          <span>Collect</span>
-        </div>
-      </section>
+    <main className="relative min-h-screen w-full overflow-hidden">
+      {/* 배경 */}
+      <img src={bgUrl} alt="" className="absolute inset-0 h-full w-full object-cover" />
 
-      <section className="auth-form-panel" aria-label="로그인">
-        <div className="auth-card">
-          <div className="auth-card-heading">
-            <div className="auth-mark">P</div>
-            <div>
-              <h2>{mode === 'login' ? '로그인' : '회원가입'}</h2>
-              <p>학습 게임을 바로 시작하세요.</p>
-            </div>
-          </div>
+      {/* 로그인 카드 */}
+      <div className="relative z-10 flex min-h-screen items-center justify-center p-4">
+        <div className="relative w-[420px] max-w-full rounded-[20px] bg-white px-[50px] py-[clamp(2.75rem,6vh,5.5rem)] shadow-2xl">
+          <img src={logoUrl} alt="POLY Phonics" className="mx-auto h-[110px] w-auto object-contain" />
 
-          <div className="auth-tabs" role="tablist" aria-label="인증 방식">
-            {(['login', 'signup'] as const).map((m) => (
-              <button
-                key={m}
-                type="button"
-                role="tab"
-                aria-selected={mode === m}
-                onClick={() => {
-                  setMode(m)
-                  setError('')
-                }}
-                className="auth-tab"
-              >
-                {m === 'login' ? '로그인' : '회원가입'}
-              </button>
-            ))}
-          </div>
-
-          <form onSubmit={onSubmit} className="auth-form">
-            {mode === 'signup' && (
-              <label className="auth-field">
-                <span>이름</span>
-                <input
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="홍길동"
-                  required
-                  className={inputCls}
-                />
-              </label>
-            )}
-            <label className="auth-field">
-              <span>이메일</span>
+          <form
+            onSubmit={onSubmit}
+            className="mt-[clamp(2rem,4.5vh,3.75rem)] flex flex-col gap-[clamp(0.75rem,2vh,1.75rem)]"
+          >
+            <div className="relative">
+              <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#0ea5e9]">
+                {ICON_ID}
+              </span>
               <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="student@demo.test"
+                value={id}
+                onChange={(e) => setId(e.target.value)}
+                placeholder="ID"
+                aria-label="ID"
+                autoComplete="username"
                 required
-                className={inputCls}
+                className={`${fieldCls} pr-4`}
               />
-            </label>
-            <label className="auth-field">
-              <span>비밀번호</span>
+            </div>
+
+            <div className="relative">
+              <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#0ea5e9]">
+                {ICON_PW}
+              </span>
               <input
-                type="password"
+                type={showPw ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder={mode === 'signup' ? '8자 이상 입력' : '비밀번호 입력'}
+                placeholder="Password"
+                aria-label="Password"
+                autoComplete="current-password"
                 required
-                minLength={mode === 'signup' ? 8 : undefined}
-                className={inputCls}
+                className={`${fieldCls} pr-12`}
               />
+              <button
+                type="button"
+                onClick={() => setShowPw((v) => !v)}
+                aria-label={showPw ? '비밀번호 숨기기' : '비밀번호 표시'}
+                className="absolute right-3 top-1/2 grid h-9 w-9 -translate-y-1/2 place-items-center text-[#8fbfe0] transition hover:text-[#0ea5e9]"
+              >
+                {showPw ? ICON_EYE_OFF : ICON_EYE}
+              </button>
+            </div>
+
+            <label className="mt-1 flex w-fit cursor-pointer items-center gap-2 text-[16px] text-[#102a43]">
+              <input
+                type="checkbox"
+                checked={rememberId}
+                onChange={(e) => setRememberId(e.target.checked)}
+                className="peer sr-only"
+              />
+              <span className="grid h-6 w-6 place-items-center rounded-md border-2 border-[#c3e0f5] bg-white text-white peer-checked:border-[#0ea5e9] peer-checked:bg-[#0ea5e9]">
+                <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4">
+                  <path
+                    d="M5 12.5l4.5 4.5L19 7"
+                    stroke="currentColor"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </span>
+              아이디 저장
             </label>
-            {mode === 'signup' && (
-              <label className="auth-field">
-                <span>역할</span>
-                <select value={role} onChange={(e) => setRole(e.target.value as Role)} className={inputCls}>
-                  <option value="student">학생 (게임 플레이)</option>
-                  <option value="admin">관리자 (통계 확인)</option>
-                </select>
-              </label>
-            )}
-            {error && <p className="auth-error">{error}</p>}
-            <button type="submit" disabled={busy} className="auth-submit">
-              {busy ? '처리 중...' : mode === 'login' ? '로그인' : '가입하기'}
+
+            {error && <p className="text-center text-sm font-semibold text-red-500">{error}</p>}
+
+            <button
+              type="submit"
+              disabled={busy}
+              className="mt-[clamp(0.75rem,2.2vh,2rem)] h-[60px] w-full rounded-full bg-[#0ea5e9] text-[28px] font-bold tracking-wide text-white transition hover:bg-[#0284c7] disabled:opacity-60"
+            >
+              {busy ? '로그인 중…' : 'LOGIN'}
             </button>
           </form>
-        </div>
 
-        <div className="demo-account-card">
-          <span>데모 계정</span>
-          <b>student@demo.test</b>
-          <b>admin@demo.test</b>
-          <span>비밀번호 공통: demo1234</span>
+          {/* 회원가입 · 아이디찾기 · 비밀번호찾기 */}
+          <div className="mt-[clamp(1.25rem,3vh,2.5rem)] flex items-center justify-center gap-3 text-[14px] text-[#102a43]">
+            <button type="button" className="hover:underline">
+              회원가입
+            </button>
+            <span className="h-3.5 w-px bg-gray-300" />
+            <button type="button" className="hover:underline">
+              아이디찾기
+            </button>
+            <span className="h-3.5 w-px bg-gray-300" />
+            <button type="button" className="hover:underline">
+              비밀번호찾기
+            </button>
+          </div>
+
+          {/* 이용약관 · 개인정보취급방침 */}
+          <div className="mt-[clamp(1rem,2.2vh,2rem)] flex gap-2.5">
+            <button
+              type="button"
+              className="h-12 flex-1 rounded-[10px] bg-[#eaf4fd] text-[14px] font-semibold text-[#0ea5e9] transition hover:bg-[#dcecfb]"
+            >
+              이용약관
+            </button>
+            <button
+              type="button"
+              className="h-12 flex-1 rounded-[10px] bg-[#eaf4fd] text-[14px] font-semibold text-[#0ea5e9] transition hover:bg-[#dcecfb]"
+            >
+              개인정보취급방침
+            </button>
+          </div>
         </div>
-      </section>
+      </div>
+
+      {/* 캐릭터(스프라이트 애니메이션) — 화면 우하단, 카드 위(z-20). right-0 기준으로 안 잘림 */}
+      <CharacterSprite className="pointer-events-none absolute bottom-[2vw] right-[2vw] z-20 hidden aspect-[622/450] w-[clamp(300px,40vw,820px)] max-w-[calc((100vw-420px)/2)] drop-shadow-[0_18px_14px_rgba(0,0,0,0.38)] lg:block" />
+
+      {/* AI 안내 + 카피라이트 (하단, 배경 위 흰색) */}
+      <div className="absolute inset-x-0 bottom-4 z-10 px-4 text-center text-white/85 [text-shadow:0_1px_3px_rgba(0,0,0,0.45)]">
+        <p className="text-[13px] font-medium">{t('footer.aiNotice')}</p>
+        <p className="mt-0.5 text-[12px] font-medium tracking-wide">{t('footer.copyright')}</p>
+      </div>
     </main>
   )
 }
