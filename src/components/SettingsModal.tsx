@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react'
 import { LevelSelect } from './LevelSelect'
+import { getLang, setLang as applyLang, useT, type Lang } from '../i18n'
 
 /**
  * 설정 팝업 — 언어·사운드 등 앱 전역 설정.
- * 지금은 선택값을 localStorage에 저장만 한다(실제 번역/사운드 연결은 추후).
+ * 언어는 i18n(localStorage 'lang' + 'langchange' 이벤트)에 연결, 사운드는 BackgroundMusic에 연결.
  */
 export function SettingsModal({ onClose }: { onClose: () => void }) {
-  const [lang, setLang] = useState<string>(() => localStorage.getItem('lang') ?? 'ko')
+  const t = useT()
+  const [lang, setLang] = useState<Lang>(getLang)
   const [sound, setSound] = useState<boolean>(() => localStorage.getItem('sound') !== 'off')
 
   // Esc 닫기 + 배경 스크롤 잠금
@@ -24,15 +26,15 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
   }, [onClose])
 
   const changeLang = (value: string) => {
-    setLang(value)
-    localStorage.setItem('lang', value)
+    const next: Lang = value === 'en' ? 'en' : 'ko'
+    setLang(next)
+    applyLang(next) // localStorage 저장 + 'langchange' 이벤트 → 전체 UI 즉시 번역
   }
 
   const toggleSound = () => {
     setSound((prev) => {
       const next = !prev
       localStorage.setItem('sound', next ? 'on' : 'off')
-      // 배경음악에 즉시 반영(BackgroundMusic이 수신)
       window.dispatchEvent(new Event('soundchange'))
       return next
     })
@@ -45,20 +47,25 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
-        aria-label="설정"
+        aria-label={t('settings.title')}
       >
         <header className="settings-head">
-          <h2>설정</h2>
-          <button type="button" className="settings-close" onClick={onClose} aria-label="닫기">
+          <h2>{t('settings.title')}</h2>
+          <button
+            type="button"
+            className="settings-close"
+            onClick={onClose}
+            aria-label={t('settings.close')}
+          >
             ✕
           </button>
         </header>
 
         <div className="settings-body">
           <div className="settings-row">
-            <span className="settings-label">언어</span>
+            <span className="settings-label">{t('settings.language')}</span>
             <LevelSelect
-              ariaLabel="언어 선택"
+              ariaLabel={t('settings.language')}
               value={lang}
               onChange={changeLang}
               options={[
@@ -69,12 +76,12 @@ export function SettingsModal({ onClose }: { onClose: () => void }) {
           </div>
 
           <div className="settings-row">
-            <span className="settings-label">사운드</span>
+            <span className="settings-label">{t('settings.sound')}</span>
             <button
               type="button"
               role="switch"
               aria-checked={sound}
-              aria-label="사운드"
+              aria-label={t('settings.sound')}
               className={`settings-switch${sound ? ' is-on' : ''}`}
               onClick={toggleSound}
             >

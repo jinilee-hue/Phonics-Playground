@@ -6,19 +6,21 @@ import type { GalleryOut, Role, User } from '../api/types'
 import { useLogout } from '../auth/auth'
 import { LevelSelect } from './LevelSelect'
 import { SettingsModal } from './SettingsModal'
+import { useT } from '../i18n'
 import logoUrl from '../assets/logo.png'
 
-const TABS: Record<Role, { to: string; label: string }[]> = {
-  student: [{ to: '/gallery', label: '갤러리' }],
+const TABS: Record<Role, { to: string; labelKey: string }[]> = {
+  student: [{ to: '/gallery', labelKey: 'nav.gallery' }],
   admin: [
-    { to: '/gallery', label: '갤러리' },
-    { to: '/stats', label: '통계' },
+    { to: '/gallery', labelKey: 'nav.gallery' },
+    { to: '/stats', labelKey: 'nav.stats' },
   ],
 }
 
-const ROLE_LABEL: Record<Role, string> = { student: '학생', admin: '관리자' }
+const ROLE_KEY: Record<Role, string> = { student: 'role.student', admin: 'role.admin' }
 
 export function TopBar({ user }: { user: User }) {
+  const t = useT()
   const navigate = useNavigate()
   const logout = useLogout()
   const location = useLocation()
@@ -59,43 +61,40 @@ export function TopBar({ user }: { user: User }) {
         <span className="app-brand">
           <img src={logoUrl} alt="POLY Phonics" className="app-brand-logo" />
         </span>
-        <nav className="app-nav" aria-label="주 메뉴">
-          {TABS[user.role].map((t) => (
-            <NavLink key={t.to} to={t.to} className="app-nav-link">
-              {t.label}
+        <nav className="app-nav" aria-label={t('nav.gallery')}>
+          {TABS[user.role].map((tab) => (
+            <NavLink key={tab.to} to={tab.to} className="app-nav-link">
+              {t(tab.labelKey)}
             </NavLink>
           ))}
         </nav>
         <div className="app-user-menu">
           {onGallery && levels.length > 0 && (
             <LevelSelect
-              ariaLabel="레벨 필터"
+              ariaLabel={t('topbar.levelFilter')}
               value={selectedLevel}
               onChange={setLevel}
               options={[
-                { value: '', label: '전체 레벨' },
+                { value: '', label: t('level.all') },
                 ...levels.map((level) => ({ value: level, label: level })),
               ]}
             />
           )}
           <span className="app-user-badge">
             <span className="app-user-avatar" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" focusable="false">
-                <circle cx="12" cy="8" r="3.4" fill="currentColor" />
-                <path
-                  d="M5 19.2c0-3.2 3.1-5.2 7-5.2s7 2 7 5.2"
-                  fill="currentColor"
-                />
+              <svg viewBox="0 0 24 24" fill="currentColor" focusable="false">
+                <circle cx="12" cy="8.5" r="4.3" />
+                <path d="M12 13.6c-4.6 0-8.3 3-8.3 6.8V26h16.6v-5.6c0-3.8-3.7-6.8-8.3-6.8z" />
               </svg>
             </span>
-            {user.name} <b>{ROLE_LABEL[user.role]}</b>
+            {user.name} <b>{t(ROLE_KEY[user.role])}</b>
           </span>
           <button
             type="button"
             onClick={() => setSettingsOpen(true)}
             className="app-settings"
-            aria-label="설정"
-            title="설정"
+            aria-label={t('topbar.settings')}
+            title={t('topbar.settings')}
           >
             <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
               <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2" />
@@ -112,8 +111,8 @@ export function TopBar({ user }: { user: User }) {
             type="button"
             onClick={() => logout().then(() => navigate('/login'))}
             className="app-logout"
-            aria-label="로그아웃"
-            title="로그아웃"
+            aria-label={t('topbar.logout')}
+            title={t('topbar.logout')}
           >
             <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
               <path

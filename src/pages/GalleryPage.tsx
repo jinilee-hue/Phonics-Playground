@@ -5,6 +5,7 @@ import { api, ApiError } from '../api/client'
 import type { GalleryOut } from '../api/types'
 import { GameCard } from '../components/GameCard'
 import { PlayModal } from '../components/PlayModal'
+import { useT } from '../i18n'
 
 /** 뷰포트 폭 → 한 페이지에 꽉 보이는 열 수. index.css .gallery-track 브레이크포인트와 일치. */
 function computeColumns(): number {
@@ -29,6 +30,7 @@ function useColumns(): number {
 
 /** §6 갤러리 — 페이지 캐러셀(각 페이지 첫 카드 좌측 정렬 + 다음 카드 peek), 레벨 필터(TopBar, URL ?level) */
 export function GalleryPage() {
+  const t = useT()
   const [searchParams] = useSearchParams()
   const [activeId, setActiveId] = useState<number | null>(null)
   const [page, setPage] = useState(0)
@@ -88,7 +90,7 @@ export function GalleryPage() {
     <main className="gallery-page">
       {data?.stale && (
         <div className="mb-4 rounded-xl bg-amber-50 px-4 py-2.5 text-sm text-amber-700">
-          스튜디오 연결이 원활하지 않아 마지막으로 확인된 목록을 보여줍니다.
+          {t('gallery.stale')}
         </div>
       )}
 
@@ -99,19 +101,19 @@ export function GalleryPage() {
             onClick={() => refetch()}
             className="ml-3 shrink-0 rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-700"
           >
-            다시 시도
+            {t('gallery.retry')}
           </button>
         </div>
       )}
 
-      {isLoading && <p className="py-16 text-center text-gray-400">불러오는 중…</p>}
+      {isLoading && <p className="py-16 text-center text-gray-400">{t('gallery.loading')}</p>}
 
       {data && data.items.length === 0 && (
-        <p className="py-16 text-center text-gray-400">아직 게시된 콘텐츠가 없습니다.</p>
+        <p className="py-16 text-center text-gray-400">{t('gallery.empty')}</p>
       )}
 
       {data && data.items.length > 0 && filtered.length === 0 && (
-        <p className="py-16 text-center text-gray-400">선택한 레벨에 해당하는 게임이 없습니다.</p>
+        <p className="py-16 text-center text-gray-400">{t('gallery.noLevel')}</p>
       )}
 
       {filtered.length > 0 && (
@@ -133,8 +135,8 @@ export function GalleryPage() {
       {filtered.length > 0 && (
         <div className="gallery-footerbar">
           <div className="gallery-footer-text">
-            <p className="app-footer-notice">본 콘텐츠는 AI가 생성한 내용을 포함하고 있습니다.</p>
-            <p className="app-footer-copy">COPYRIGHT © 2026 Poly Inspiration. ALL RIGHTS RESERVED.</p>
+            <p className="app-footer-notice">{t('footer.aiNotice')}</p>
+            <p className="app-footer-copy">{t('footer.copyright')}</p>
           </div>
 
           {pageCount > 1 && (
@@ -144,18 +146,26 @@ export function GalleryPage() {
                 className="gallery-nav"
                 onClick={() => goTo(safePage - 1)}
                 disabled={safePage === 0}
-                aria-label="이전"
+                aria-label={t('gallery.prev')}
               >
-                ‹
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
+                  <path
+                    d="M15 5l-7 7 7 7"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
               </button>
-              <div className="gallery-dots" role="tablist" aria-label="페이지">
+              <div className="gallery-dots" role="tablist" aria-label={t('gallery.page', { n: '' })}>
                 {Array.from({ length: pageCount }, (_, i) => (
                   <button
                     key={i}
                     type="button"
                     role="tab"
                     aria-selected={i === safePage}
-                    aria-label={`${i + 1}페이지`}
+                    aria-label={t('gallery.page', { n: i + 1 })}
                     className={`gallery-dot${i === safePage ? ' is-active' : ''}`}
                     onClick={() => goTo(i)}
                   >
@@ -168,16 +178,26 @@ export function GalleryPage() {
                 className="gallery-nav"
                 onClick={() => goTo(safePage + 1)}
                 disabled={safePage >= pageCount - 1}
-                aria-label="다음"
+                aria-label={t('gallery.next')}
               >
-                ›
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
+                  <path
+                    d="M9 5l7 7-7 7"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
               </button>
             </div>
           )}
         </div>
       )}
 
-      {isFetching && !isLoading && <p className="mt-4 text-center text-xs text-gray-400">갱신 중…</p>}
+      {isFetching && !isLoading && (
+        <p className="mt-4 text-center text-xs text-gray-400">{t('gallery.refreshing')}</p>
+      )}
 
       {activeItem && <PlayModal item={activeItem} onClose={() => setActiveId(null)} />}
     </main>

@@ -1,5 +1,8 @@
 import { useRef, useState } from 'react'
 import type { GalleryItem, Kind } from '../api/types'
+import { useLang } from '../i18n'
+import { translateContent } from '../contentI18n'
+import starIcon from '../assets/ic_star.png'
 
 export const KIND_LABEL: Record<Kind, string> = {
   html: 'HTML',
@@ -134,6 +137,7 @@ export function GameCard({
   item: GalleryItem
   onPlay: (item: GalleryItem) => void
 }) {
+  const lang = useLang()
   // 레벨 · 게임종류(한글 스킬 라벨). 라벨이 영문 코드와 같으면(택소노미 폴백) 생략.
   const showSkillLabel = !!item.skillLabel && item.skillLabel !== item.skillCode
   const hasTags = !!item.courseCode || showSkillLabel
@@ -147,10 +151,10 @@ export function GameCard({
         <span className="game-card-play" aria-hidden="true">
           <svg viewBox="0 0 24 24" focusable="false">
             <path
-              d="M8 6.2v11.6l10-5.8z"
+              d="M9 7.4v9.2l8-4.6z"
               fill="currentColor"
               stroke="currentColor"
-              strokeWidth="2.4"
+              strokeWidth="3.6"
               strokeLinejoin="round"
               strokeLinecap="round"
             />
@@ -158,32 +162,42 @@ export function GameCard({
         </span>
       </div>
       <div className="game-card-body">
-        <h3>{item.title}</h3>
-        <p>{item.description}</p>
-        <div className="game-card-meta">
-          {/* 평점 + 조회수(왼쪽) — ★ 3.2 (1,292), 평점 없으면 조회수만 */}
-          <span className="game-card-stat">
-            {hasRating && item.ratingAvg != null ? (
-              <>
-                <span className="game-card-star">★</span> {item.ratingAvg.toFixed(1)}{' '}
-                <span className="game-card-views">({item.uses.toLocaleString()})</span>
-              </>
-            ) : (
-              <span className="game-card-views">▶ {item.uses.toLocaleString()}</span>
-            )}
-          </span>
-          {/* 레벨 · 게임종류 태그(오른쪽) */}
-          {hasTags && (
-            <div className="game-card-tags">
-              {item.courseCode && (
-                <span className="game-tag game-tag-level">{item.courseCode}</span>
-              )}
-              {showSkillLabel && (
-                <span className="game-tag game-tag-skill-label">{item.skillLabel}</span>
-              )}
-            </div>
+        {/* 평점 + 조회수 — 타이틀 위 */}
+        <span className="game-card-stat">
+          {hasRating && item.ratingAvg != null ? (
+            <>
+              <img src={starIcon} alt="" className="game-card-star" /> {item.ratingAvg.toFixed(1)}{' '}
+              <span className="game-card-views">({item.uses.toLocaleString()})</span>
+            </>
+          ) : (
+            <span className="game-card-views">▶ {item.uses.toLocaleString()}</span>
           )}
-        </div>
+        </span>
+        <h3>{translateContent(item.title, lang)}</h3>
+        <p>{translateContent(item.description, lang)}</p>
+        {/* 레벨 · 게임종류 · AI 태그(하단) */}
+        {(hasTags || item.aiGenerated) && (
+          <div className="game-card-tags">
+            {item.courseCode && <span className="game-tag game-tag-level">{item.courseCode}</span>}
+            {showSkillLabel && (
+              <span className="game-tag game-tag-skill-label">
+                {translateContent(item.skillLabel, lang)}
+              </span>
+            )}
+            {item.aiGenerated && (
+              <span className="game-tag game-tag-ai">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                  <path
+                    d="M12 2.2l1.9 5.9 5.9 1.9-5.9 1.9L12 17.8l-1.9-5.9L4.2 10l5.9-1.9z"
+                    fill="currentColor"
+                  />
+                  <path d="M19 3l.7 2.1L21.8 6l-2.1.7L19 8.8l-.7-2.1L16.2 6l2.1-.9z" fill="currentColor" />
+                </svg>
+                AI
+              </span>
+            )}
+          </div>
+        )}
       </div>
     </button>
   )

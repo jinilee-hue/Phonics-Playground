@@ -639,7 +639,12 @@ function buildBreakdown(): StatsBreakdownOut {
   return { byLevel, bySkill, byLevelSkill }
 }
 
-const GALLERY_OUT: GalleryOut = { items: GALLERY_ITEMS, stale: false }
+// 디자인 목: AI로 생성한 콘텐츠(카드에 AI 배지)
+const AI_MADE_IDS = new Set([1, 3, 6, 8, 11, 13, 14, 16, 19, 23, 25, 26, 28])
+const GALLERY_OUT: GalleryOut = {
+  items: GALLERY_ITEMS.map((it) => ({ ...it, aiGenerated: AI_MADE_IDS.has(it.id) })),
+  stale: false,
+}
 
 /** 경로(쿼리스트링 제외)로 목업을 매칭해 반환. 매칭 실패 시 null. */
 export function resolveMock(method: 'GET' | 'POST', path: string, body?: unknown): unknown {

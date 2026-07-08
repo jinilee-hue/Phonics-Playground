@@ -30,6 +30,7 @@ export interface GalleryItem {
   ratingAvg: number | null
   ratingCount: number
   myRating: number | null
+  aiGenerated?: boolean // AI로 생성된 콘텐츠면 카드에 AI 배지 표시
 }
 
 /** §6 별점 평가(A) — upsert 후 갱신된 내 점수·평균·개수 */
