@@ -6,7 +6,7 @@ import type { User } from '../api/types'
 import { homeFor } from '../auth/auth'
 import { useT } from '../i18n'
 import logoUrl from '../assets/logo.png'
-import bgUrl from '../assets/login-bg.png'
+import bgVideo from '../assets/login_bg.mp4'
 import charactersSprite from '../assets/login-characters-anim.png'
 
 // 캐릭터 스프라이트 시트: 6열 × 6행 = 36프레임(각 622×450), 프레임당 50ms
@@ -116,13 +116,24 @@ export function LoginPage() {
 
   return (
     <main className="relative min-h-screen w-full overflow-hidden">
-      {/* 배경 */}
-      <img src={bgUrl} alt="" className="absolute inset-0 h-full w-full object-cover" />
+      {/* 배경 (영상) */}
+      <video
+        src={bgVideo}
+        autoPlay
+        muted
+        loop
+        playsInline
+        className="absolute inset-0 h-full w-full object-cover"
+      />
 
       {/* 로그인 카드 */}
       <div className="relative z-10 flex min-h-screen items-center justify-center p-4">
         <div className="relative w-[420px] max-w-full rounded-[20px] bg-white px-[50px] py-[clamp(2.75rem,6vh,5.5rem)] shadow-2xl">
-          <img src={logoUrl} alt="POLY Phonics" className="mx-auto h-[110px] w-auto object-contain" />
+          <img
+            src={logoUrl}
+            alt="POLY Phonics"
+            className="mx-auto h-[clamp(104px,15vh,168px)] w-auto object-contain"
+          />
 
           <form
             onSubmit={onSubmit}
@@ -193,7 +204,7 @@ export function LoginPage() {
             <button
               type="submit"
               disabled={busy}
-              className="mt-[clamp(0.75rem,2.2vh,2rem)] h-[60px] w-full rounded-full bg-[#0ea5e9] text-[28px] font-bold tracking-wide text-white transition hover:bg-[#0284c7] disabled:opacity-60"
+              className="mt-[clamp(0.75rem,2.2vh,2rem)] h-[60px] w-full rounded-full bg-gradient-to-b from-[#3cc0f7] to-[#0ea5e9] text-[28px] font-bold tracking-wide text-white shadow-[0_6px_0_#0c82bd,0_11px_16px_rgba(7,89,133,0.3)] transition active:translate-y-[3px] active:shadow-[0_3px_0_#0c82bd,0_6px_10px_rgba(7,89,133,0.25)] disabled:opacity-60"
             >
               {busy ? '로그인 중…' : 'LOGIN'}
             </button>
@@ -233,7 +244,10 @@ export function LoginPage() {
       </div>
 
       {/* 캐릭터(스프라이트 애니메이션) — 화면 우하단, 카드 위(z-20). right-0 기준으로 안 잘림 */}
-      <CharacterSprite className="pointer-events-none absolute bottom-[2vw] right-[2vw] z-20 hidden aspect-[622/450] w-[clamp(300px,40vw,820px)] max-w-[calc((100vw-420px)/2)] drop-shadow-[0_18px_14px_rgba(0,0,0,0.38)] lg:block" />
+      {/* 캐릭터 위치를 right(2vw)와 max-w로 제어(왼쪽 끝 = 100vw-2vw-width).
+          태블릿(lg): max-w 48vw-160px → 왼쪽 끝 50vw+160px(버튼 경계, 안 가림).
+          PC(xl+): max-w 48vw-140px → 왼쪽 끝 50vw+140px(20px 더 왼쪽, 박스와 겹침). */}
+      <CharacterSprite className="pointer-events-none absolute bottom-[2vw] right-[2vw] z-20 hidden aspect-[622/450] w-[clamp(300px,40vw,820px)] max-w-[calc(48vw-160px)] drop-shadow-[0_18px_14px_rgba(0,0,0,0.38)] lg:block xl:max-w-[calc(48vw-140px)]" />
 
       {/* AI 안내 + 카피라이트 (하단, 배경 위 흰색) */}
       <div className="absolute inset-x-0 bottom-4 z-10 px-4 text-center text-white/85 [text-shadow:0_1px_3px_rgba(0,0,0,0.45)]">

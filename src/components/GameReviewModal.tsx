@@ -107,7 +107,7 @@ export function GameReviewModal({
         <img
           src={FACES[shown]}
           alt=""
-          className="mt-3 h-[100px] w-[100px] object-contain"
+          className="mt-3 h-[132px] w-[132px] object-contain"
           aria-hidden="true"
         />
         <p className="mt-2 text-center text-[20px] font-extrabold text-[#0ea5e9]">{PROMPTS[shown]}</p>
@@ -145,7 +145,7 @@ export function GameReviewModal({
             type="button"
             onClick={onCancel}
             disabled={isPending}
-            className="h-[60px] flex-1 rounded-full bg-[#999999] text-[20px] font-extrabold text-white transition hover:bg-[#8a8a8a] disabled:opacity-60"
+            className="h-[60px] flex-1 rounded-full bg-gradient-to-b from-[#b3b3b3] to-[#999999] text-[20px] font-extrabold text-white shadow-[0_6px_0_#7d7d7d,0_10px_14px_rgba(0,0,0,0.18)] transition active:translate-y-[3px] active:shadow-[0_3px_0_#7d7d7d,0_6px_10px_rgba(0,0,0,0.15)] disabled:opacity-60"
           >
             취소
           </button>
@@ -153,8 +153,10 @@ export function GameReviewModal({
             type="button"
             onClick={() => rate(rating)}
             disabled={rating === 0 || isPending}
-            className={`h-[60px] flex-1 rounded-full text-[20px] font-extrabold text-white transition ${
-              rating === 0 ? 'cursor-not-allowed bg-[#999999]' : 'bg-[#0ea5e9] hover:bg-[#0284c7]'
+            className={`h-[60px] flex-1 rounded-full text-[20px] font-extrabold text-white transition active:translate-y-[3px] disabled:cursor-not-allowed ${
+              rating === 0
+                ? 'bg-[#c4c4c4] shadow-[0_6px_0_#a6a6a6]'
+                : 'bg-gradient-to-b from-[#3cc0f7] to-[#0ea5e9] shadow-[0_6px_0_#0c82bd,0_10px_16px_rgba(7,89,133,0.3)] active:shadow-[0_3px_0_#0c82bd,0_6px_10px_rgba(7,89,133,0.25)]'
             }`}
           >
             {rating === 5 ? '리뷰 저장' : '평가 완료'}
