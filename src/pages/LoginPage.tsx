@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { api } from '../api/client'
 import type { User } from '../api/types'
@@ -87,15 +87,33 @@ export function LoginPage() {
   const [showPw, setShowPw] = useState(false)
   const [rememberId, setRememberId] = useState(() => !!localStorage.getItem('savedId'))
   const [error, setError] = useState('')
+  const [fieldErr, setFieldErr] = useState<{ id?: string; password?: string }>({})
   const [busy, setBusy] = useState(false)
 
   const qc = useQueryClient()
   const navigate = useNavigate()
   const location = useLocation()
+  const idRef = useRef<HTMLInputElement>(null)
+  const pwRef = useRef<HTMLInputElement>(null)
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
+
+    // 기본 브라우저 말풍선 대신 커스텀 검증 — 빈 칸이면 해당 필드 강조 후 포커스
+    const next: { id?: string; password?: string } = {}
+    if (!id.trim()) next.id = '아이디를 입력해 주세요.'
+    if (!password) next.password = '비밀번호를 입력해 주세요.'
+    setFieldErr(next)
+    if (next.id) {
+      idRef.current?.focus()
+      return
+    }
+    if (next.password) {
+      pwRef.current?.focus()
+      return
+    }
+
     setBusy(true)
     try {
       const user = await api.post<User>('/api/auth/login', { email: id, password })
@@ -111,8 +129,26 @@ export function LoginPage() {
     }
   }
 
-  const fieldCls =
-    'h-12 w-full rounded-full border border-[#c3e0f5] bg-[#eaf4fd] pl-12 text-[20px] text-[#102a43] placeholder:text-[#8fbfe0] focus:border-[#0ea5e9] focus:outline-none'
+  // 에러 시 부드러운 빨강 테두리·배경, 평상시 하늘색
+  const fieldCls = (hasErr: boolean) =>
+    `h-12 w-full rounded-full border pl-12 text-[20px] text-[#102a43] placeholder:text-[#8fbfe0] focus:outline-none ${
+      hasErr
+        ? 'border-[#ff9d9d] bg-[#fff4f4] focus:border-[#ff6b6b]'
+        : 'border-[#c3e0f5] bg-[#eaf4fd] focus:border-[#0ea5e9]'
+    }`
+
+  // 필드 아래 커스텀 에러 메시지 (앱 톤 — 둥근 배지 스타일)
+  const FieldError = ({ msg }: { msg?: string }) =>
+    msg ? (
+      <p className="mt-1.5 flex items-center gap-1.5 pl-3 text-[14px] font-semibold text-[#ff6b6b]">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className="h-[18px] w-[18px] shrink-0">
+          <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" />
+          <path d="M12 7.5v5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          <circle cx="12" cy="16.2" r="1.1" fill="currentColor" />
+        </svg>
+        {msg}
+      </p>
+    ) : null
 
   return (
     <main className="relative min-h-screen w-full overflow-hidden">
@@ -126,9 +162,10 @@ export function LoginPage() {
         className="absolute inset-0 h-full w-full object-cover"
       />
 
-      {/* 로그인 카드 */}
-      <div className="relative z-10 flex min-h-screen items-center justify-center p-4">
-        <div className="relative w-[420px] max-w-full rounded-[20px] bg-white px-[50px] py-[clamp(2.75rem,6vh,5.5rem)] shadow-2xl">
+      {/* 로그인 카드 + 하단 푸터: flex 컬럼으로 배치해 카드가 항상 푸터 위 공간에서 중앙 정렬(겹침 방지) */}
+      <div className="relative z-10 flex min-h-screen flex-col p-4">
+        <div className="flex min-h-0 flex-1 items-center justify-center overflow-y-auto py-2">
+          <div className="relative w-[420px] max-w-full rounded-[20px] bg-white px-[50px] py-[clamp(2.75rem,6vh,5.5rem)] shadow-2xl">
           <img
             src={logoUrl}
             alt="POLY Phonics"
@@ -137,45 +174,68 @@ export function LoginPage() {
 
           <form
             onSubmit={onSubmit}
+            noValidate
             className="mt-[clamp(2rem,4.5vh,3.75rem)] flex flex-col gap-[clamp(0.75rem,2vh,1.75rem)]"
           >
-            <div className="relative">
-              <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#0ea5e9]">
-                {ICON_ID}
-              </span>
-              <input
-                value={id}
-                onChange={(e) => setId(e.target.value)}
-                placeholder="ID"
-                aria-label="ID"
-                autoComplete="username"
-                required
-                className={`${fieldCls} pr-4`}
-              />
+            <div>
+              <div className="relative">
+                <span
+                  className={`pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 ${
+                    fieldErr.id ? 'text-[#ff6b6b]' : 'text-[#0ea5e9]'
+                  }`}
+                >
+                  {ICON_ID}
+                </span>
+                <input
+                  ref={idRef}
+                  value={id}
+                  onChange={(e) => {
+                    setId(e.target.value)
+                    if (fieldErr.id) setFieldErr((p) => ({ ...p, id: undefined }))
+                  }}
+                  placeholder="ID"
+                  aria-label="ID"
+                  aria-invalid={!!fieldErr.id}
+                  autoComplete="username"
+                  className={`${fieldCls(!!fieldErr.id)} pr-4`}
+                />
+              </div>
+              <FieldError msg={fieldErr.id} />
             </div>
 
-            <div className="relative">
-              <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#0ea5e9]">
-                {ICON_PW}
-              </span>
-              <input
-                type={showPw ? 'text' : 'password'}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Password"
-                aria-label="Password"
-                autoComplete="current-password"
-                required
-                className={`${fieldCls} pr-12`}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPw((v) => !v)}
-                aria-label={showPw ? '비밀번호 숨기기' : '비밀번호 표시'}
-                className="absolute right-3 top-1/2 grid h-9 w-9 -translate-y-1/2 place-items-center text-[#8fbfe0] transition hover:text-[#0ea5e9]"
-              >
-                {showPw ? ICON_EYE_OFF : ICON_EYE}
-              </button>
+            <div>
+              <div className="relative">
+                <span
+                  className={`pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 ${
+                    fieldErr.password ? 'text-[#ff6b6b]' : 'text-[#0ea5e9]'
+                  }`}
+                >
+                  {ICON_PW}
+                </span>
+                <input
+                  ref={pwRef}
+                  type={showPw ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => {
+                    setPassword(e.target.value)
+                    if (fieldErr.password) setFieldErr((p) => ({ ...p, password: undefined }))
+                  }}
+                  placeholder="Password"
+                  aria-label="Password"
+                  aria-invalid={!!fieldErr.password}
+                  autoComplete="current-password"
+                  className={`${fieldCls(!!fieldErr.password)} pr-12`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPw((v) => !v)}
+                  aria-label={showPw ? '비밀번호 숨기기' : '비밀번호 표시'}
+                  className="absolute right-3 top-1/2 grid h-9 w-9 -translate-y-1/2 place-items-center text-[#8fbfe0] transition hover:text-[#0ea5e9]"
+                >
+                  {showPw ? ICON_EYE_OFF : ICON_EYE}
+                </button>
+              </div>
+              <FieldError msg={fieldErr.password} />
             </div>
 
             <label className="mt-1 flex w-fit cursor-pointer items-center gap-2 text-[16px] text-[#102a43]">
@@ -240,6 +300,13 @@ export function LoginPage() {
               개인정보취급방침
             </button>
           </div>
+          </div>
+        </div>
+
+        {/* AI 안내 + 카피라이트 — 흐름상 하단에 배치해 카드와 겹치지 않음 */}
+        <div className="shrink-0 px-4 pt-3 text-center text-white/85 [text-shadow:0_1px_3px_rgba(0,0,0,0.45)]">
+          <p className="text-[13px] font-medium">{t('footer.aiNotice')}</p>
+          <p className="mt-0.5 text-[12px] font-medium tracking-wide">{t('footer.copyright')}</p>
         </div>
       </div>
 
@@ -248,12 +315,6 @@ export function LoginPage() {
           태블릿(lg): max-w 48vw-160px → 왼쪽 끝 50vw+160px(버튼 경계, 안 가림).
           PC(xl+): max-w 48vw-140px → 왼쪽 끝 50vw+140px(20px 더 왼쪽, 박스와 겹침). */}
       <CharacterSprite className="pointer-events-none absolute bottom-[2vw] right-[2vw] z-20 hidden aspect-[622/450] w-[clamp(300px,40vw,820px)] max-w-[calc(48vw-160px)] drop-shadow-[0_18px_14px_rgba(0,0,0,0.38)] lg:block xl:max-w-[calc(48vw-140px)]" />
-
-      {/* AI 안내 + 카피라이트 (하단, 배경 위 흰색) */}
-      <div className="absolute inset-x-0 bottom-4 z-10 px-4 text-center text-white/85 [text-shadow:0_1px_3px_rgba(0,0,0,0.45)]">
-        <p className="text-[13px] font-medium">{t('footer.aiNotice')}</p>
-        <p className="mt-0.5 text-[12px] font-medium tracking-wide">{t('footer.copyright')}</p>
-      </div>
     </main>
   )
 }
