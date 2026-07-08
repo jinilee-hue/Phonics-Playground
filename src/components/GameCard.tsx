@@ -1,6 +1,5 @@
 import { useRef, useState } from 'react'
 import type { GalleryItem, Kind } from '../api/types'
-import { StarAvg } from './StarRating'
 
 export const KIND_LABEL: Record<Kind, string> = {
   html: 'HTML',
@@ -135,44 +134,56 @@ export function GameCard({
   item: GalleryItem
   onPlay: (item: GalleryItem) => void
 }) {
-  const published = item.publishedAt
-    ? new Date(item.publishedAt).toLocaleString('ko-KR', { dateStyle: 'short' })
-    : null
+  // 레벨 · 게임종류(한글 스킬 라벨). 라벨이 영문 코드와 같으면(택소노미 폴백) 생략.
+  const showSkillLabel = !!item.skillLabel && item.skillLabel !== item.skillCode
+  const hasTags = !!item.courseCode || showSkillLabel
+  const hasRating = item.ratingCount > 0 && item.ratingAvg != null
 
   return (
     <button type="button" onClick={() => onPlay(item)} className="game-card">
       <div className="game-card-media">
         <Thumbnail item={item} />
-        <KindBadge kind={item.kind} />
+        {/* 카드 전체가 클릭 버튼이므로 재생 아이콘은 장식용(pointer-events 없음) */}
+        <span className="game-card-play" aria-hidden="true">
+          <svg viewBox="0 0 24 24" focusable="false">
+            <path
+              d="M8 6.2v11.6l10-5.8z"
+              fill="currentColor"
+              stroke="currentColor"
+              strokeWidth="2.4"
+              strokeLinejoin="round"
+              strokeLinecap="round"
+            />
+          </svg>
+        </span>
       </div>
       <div className="game-card-body">
-        <div className="game-card-meta">
-          {published && <span>{published}</span>}
-          {item.ratingCount > 0 && item.ratingAvg != null && (
-            <StarAvg avg={item.ratingAvg} count={item.ratingCount} />
-          )}
-        </div>
         <h3>{item.title}</h3>
         <p>{item.description}</p>
-        {(item.courseCode || item.skillCode) && (
-          // 레벨 · 스킬 라벨 · 스킬 코드 순으로 공백을 두고 나열. 라벨이 코드와 같으면(택소노미 폴백) 라벨 생략.
-          <div className="game-card-tags">
-            {item.courseCode && <span className="game-tag game-tag-level">{item.courseCode}</span>}
-            {item.skillLabel && item.skillLabel !== item.skillCode && (
-              <span className="game-tag game-tag-skill-label">{item.skillLabel}</span>
+        <div className="game-card-meta">
+          {/* 평점 + 조회수(왼쪽) — ★ 3.2 (1,292), 평점 없으면 조회수만 */}
+          <span className="game-card-stat">
+            {hasRating && item.ratingAvg != null ? (
+              <>
+                <span className="game-card-star">★</span> {item.ratingAvg.toFixed(1)}{' '}
+                <span className="game-card-views">({item.uses.toLocaleString()})</span>
+              </>
+            ) : (
+              <span className="game-card-views">▶ {item.uses.toLocaleString()}</span>
             )}
-            {item.skillCode && (
-              <span className="game-tag game-tag-skill-code">{item.skillCode}</span>
-            )}
-          </div>
-        )}
-      </div>
-      <div className="game-card-footer">
-        <div className="game-card-stats">
-          <span>▶ {item.uses}회</span>
-          <span>✓ {item.completions}</span>
+          </span>
+          {/* 레벨 · 게임종류 태그(오른쪽) */}
+          {hasTags && (
+            <div className="game-card-tags">
+              {item.courseCode && (
+                <span className="game-tag game-tag-level">{item.courseCode}</span>
+              )}
+              {showSkillLabel && (
+                <span className="game-tag game-tag-skill-label">{item.skillLabel}</span>
+              )}
+            </div>
+          )}
         </div>
-        <span className="game-card-action">플레이</span>
       </div>
     </button>
   )

@@ -42,10 +42,10 @@ export function StarRating({
 }
 
 /** 읽기 전용 평균 별점 — GameCard 푸터 등 컴팩트 표시용 */
-export function StarAvg({ avg, count }: { avg: number; count: number }) {
+export function StarAvg({ avg }: { avg: number }) {
   return (
     <span className="rounded-full bg-amber-50 px-2.5 py-1 font-semibold text-amber-600">
-      ★ {avg.toFixed(1)} · {count}명
+      ★ {avg.toFixed(1)}
     </span>
   )
 }
