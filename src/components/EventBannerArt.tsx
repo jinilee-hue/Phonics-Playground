@@ -200,9 +200,11 @@ function ColorfulSong({ accent, label }: { accent: string; label: string }) {
            C22.1 41.5 18.2 37.8 18.2 33 Z"
       />
 
-      {/* 망치 — 넓은 머리 + 가운데 손잡이 */}
-      <rect x={44} y={14} width={22} height={9} rx={2.5} fill={accent} />
-      <rect x={52.5} y={23} width={5} height={26} rx={2.5} fill={accent} />
+      {/* 망치 — 머리·손잡이 한 path로 연결 */}
+      <path
+        fill={accent}
+        d="M44 16.5 Q44 14 46.5 14 H63.5 Q66 14 66 16.5 V20.5 Q66 23 63.5 23 H57.5 V46.5 Q57.5 49 55 49 Q52.5 49 52.5 46.5 V23 H46.5 Q44 23 44 20.5 V16.5 Z"
+      />
 
       <text x={38} y={64} textAnchor="middle" className="event-banner-art-plain" fontSize="12" fontWeight="800">
         {label}
