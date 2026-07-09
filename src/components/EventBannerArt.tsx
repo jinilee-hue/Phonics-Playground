@@ -93,8 +93,8 @@ function blockLabelFill(palette: BannerPalette, tone: BlockTone): string {
   return tone === 'surface' ? palette.ink : palette.surface
 }
 
-/** 컬러 배너 — 알파벳 블록 (흰 2 + accent 1, 부드러운 그림자) */
-function ColorfulAlphabet({ accent }: { accent: string }) {
+/** 컬러 배너 — 알파벳 사운드 매칭 (A·b·C 블록) */
+function ColorfulAlphabetBlocks({ accent }: { accent: string }) {
   return (
     <>
       <g transform="rotate(11 54 30)">
@@ -122,8 +122,46 @@ function ColorfulAlphabet({ accent }: { accent: string }) {
   )
 }
 
-/** 컬러 배너 — 단모음 a 낚시 */
-function ColorfulFish({ tailColor }: { tailColor: string }) {
+/** 컬러 배너 — 대소문자 매칭 (A ↔ a) */
+function ColorfulCaseMatch({ accent }: { accent: string }) {
+  return (
+    <>
+      <g transform="rotate(-8 20 36)">
+        <ellipse cx={20} cy={52} rx={11} ry={2.5} fill="#191b23" opacity=".09" />
+        <rect x={8} y={30} width={24} height={24} rx={7} fill="#fff" />
+        <text x={20} y={48} textAnchor="middle" className="event-banner-art-plain" fontSize="15">
+          A
+        </text>
+      </g>
+      <path
+        d="M34 40h10"
+        stroke="#191b23"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        opacity=".35"
+      />
+      <path
+        d="M42 36l4 4-4 4"
+        fill="none"
+        stroke="#191b23"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        opacity=".35"
+      />
+      <g transform="rotate(8 56 36)">
+        <ellipse cx={56} cy={52} rx={11} ry={2.5} fill="#191b23" opacity=".09" />
+        <rect x={44} y={30} width={24} height={24} rx={7} fill={accent} />
+        <text x={56} y={48} textAnchor="middle" className="event-banner-art-plain" fill="#fff" fontSize="15">
+          a
+        </text>
+      </g>
+    </>
+  )
+}
+
+/** 컬러 배너 — 단모음/블렌드 낚시 (물고기 + 글자) */
+function ColorfulFish({ tailColor, label }: { tailColor: string; label: string }) {
   const ink = '#191b23'
   return (
     <>
@@ -135,23 +173,38 @@ function ColorfulFish({ tailColor }: { tailColor: string }) {
         fill="#6dd3cf"
       />
       <circle cx={58} cy={34} r={2.5} fill={ink} />
+      <text x={38} y={42} textAnchor="middle" className="event-banner-art-plain" fill={ink} fontSize="14">
+        {label}
+      </text>
     </>
   )
 }
 
-/** 컬러 배너 — 파닉스 송 */
+/** 컬러 배너 — 파닉스 송 (플랫: 흰 원 + 음표 + 보라 망치 + 글자) */
 function ColorfulSong({ accent, label }: { accent: string; label: string }) {
   const ink = '#191b23'
   return (
     <>
-      <ellipse cx={34} cy={62} rx={18} ry={2.5} fill={ink} opacity=".08" />
-      <circle cx={34} cy={30} r={20} fill="#fff" />
-      <ellipse cx={26} cy={34} rx={7} ry={5} fill={ink} transform="rotate(-28 26 34)" />
-      <rect x={30.5} y={12} width={3.5} height={24} rx={1.75} fill={ink} />
-      <path d="M34 12h16v7H34Z" fill={ink} />
-      <rect x={50} y={18} width={3.5} height={26} rx={1.75} fill={accent} />
-      <circle cx={51.75} cy={46} r={5} fill={accent} />
-      <text x={34} y={62} textAnchor="middle" className="event-banner-art-plain" fontSize="11">
+      <ellipse cx={38} cy={58} rx={22} ry={3} fill={ink} opacity=".08" />
+      <circle cx={27} cy={29} r={17} fill="#fff" />
+
+      {/* 8분음표 — 머리·줄기·깃 한 path로 연결 */}
+      <path
+        fill={ink}
+        d="M18.2 33
+           C18.2 28.4 22.1 24.5 26.8 24.5
+           C28.8 24.5 30.6 25.2 32 26.4
+           V15 H45 V21.5 H33.2 V27.5
+           C34.8 28.8 35.8 30.8 35.8 33
+           C35.8 37.8 31.4 41.5 26.8 41.5
+           C22.1 41.5 18.2 37.8 18.2 33 Z"
+      />
+
+      {/* 망치 — 넓은 머리 + 가운데 손잡이 */}
+      <rect x={44} y={14} width={22} height={9} rx={2.5} fill={accent} />
+      <rect x={52.5} y={23} width={5} height={26} rx={2.5} fill={accent} />
+
+      <text x={38} y={64} textAnchor="middle" className="event-banner-art-plain" fontSize="12" fontWeight="800">
         {label}
       </text>
     </>
@@ -199,7 +252,7 @@ function MotifIcon({ spec, palette }: { spec: BannerSpec; palette: BannerPalette
   switch (spec.motif) {
     case 'fish':
       if (spec.accent) {
-        return <ColorfulFish tailColor={spec.accent} />
+        return <ColorfulFish tailColor={spec.accent} label={spec.label} />
       }
       return (
         <>
@@ -345,7 +398,11 @@ function MotifIcon({ spec, palette }: { spec: BannerSpec; palette: BannerPalette
     case 'alphabet':
     default:
       if (spec.accent) {
-        return <ColorfulAlphabet accent={spec.accent} />
+        return spec.label === 'Aa' ? (
+          <ColorfulCaseMatch accent={spec.accent} />
+        ) : (
+          <ColorfulAlphabetBlocks accent={spec.accent} />
+        )
       }
       return (
         <>
