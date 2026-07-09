@@ -110,6 +110,125 @@ button:disabled {
   top: 0;
   z-index: 10;
   background: transparent;
+  transition:
+    background 0.2s ease,
+    box-shadow 0.2s ease,
+    backdrop-filter 0.2s ease;
+}
+
+/* 리스트형 — 스크롤 내리면 헤더에 반투명 흰 배경 */
+.app-shell-dash .app-topbar.is-scrolled {
+  background: rgb(255 255 255 / 0.8);
+  backdrop-filter: blur(12px) saturate(1.1);
+  box-shadow: 0 2px 16px rgb(15 23 42 / 0.08);
+}
+
+/* 통계 모달(리스트형에서 그래프 아이콘 클릭 시) */
+.stats-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5vh 2vw;
+  background: rgb(7 25 40 / 0.5);
+  backdrop-filter: blur(4px);
+}
+
+.stats-modal {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: min(1240px, 96vw);
+  height: 92vh;
+  background: #eef2f7;
+  border-radius: 22px;
+  overflow: hidden;
+  box-shadow: 0 24px 70px rgb(7 45 80 / 0.4);
+}
+
+/* 고정 헤더(타이틀·서브 + 닫기) — 스크롤 영역 위 */
+.stats-modal-head {
+  flex-shrink: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.5rem 1.75rem 1.1rem;
+}
+
+.stats-modal-head h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #102a43;
+}
+
+.stats-modal-head p {
+  margin: 0.3rem 0 0;
+  font-size: 0.9rem;
+  color: #536879;
+}
+
+.stats-modal-close {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 2.2rem;
+  height: 2.2rem;
+  border: none;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.92);
+  color: #475569;
+  font-size: 1.05rem;
+  box-shadow: 0 2px 8px rgb(15 23 42 / 0.16);
+}
+
+.stats-modal-close:hover {
+  background: #fff;
+  color: #102a43;
+}
+
+.stats-modal-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+/* 모달 안에선 통계 페이지 자체 헤더(타이틀)를 숨김 — 위 고정 헤더로 대체 */
+.stats-modal .stats-page > header {
+  display: none;
+}
+
+.stats-modal .stats-page {
+  padding-top: 0;
+}
+
+/* 스크롤바 — 위아래 화살표 없이 얇은 thumb만.
+   주의: 표준 scrollbar-width/color를 지정하면 크로미움이 네이티브 스크롤바(윈도우=화살표 포함)를
+   렌더링하며 ::-webkit-scrollbar 규칙을 무시한다. 그래서 표준 속성은 쓰지 않고 webkit 전용으로 커스텀. */
+.stats-modal-body::-webkit-scrollbar {
+  width: 10px;
+}
+
+.stats-modal-body::-webkit-scrollbar-button,
+.stats-modal-body::-webkit-scrollbar-button:vertical:start,
+.stats-modal-body::-webkit-scrollbar-button:vertical:end {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.stats-modal-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.stats-modal-body::-webkit-scrollbar-thumb {
+  background: rgb(148 163 184 / 0.6);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
 }
 
 .app-footer {
@@ -142,7 +261,7 @@ button:disabled {
 .app-topbar-inner {
   display: flex;
   min-height: 4rem;
-  /* 갤러리 콘텐츠(.gallery-page)와 동일한 폭 공식 → 좌우 끝 정렬 */
+  /* 갤러리 콘텐츠(.gallery-page)와 동일한 폭 공식 → 좌우 끝 정렬 (풀블리드) */
   width: calc(100% - 2rem);
   align-items: center;
   gap: 12px;
@@ -163,6 +282,11 @@ button:disabled {
   width: auto;
   object-fit: contain;
   display: block;
+}
+
+/* 리스트형 최상단에선 헤더 로고를 감춤(자리는 유지) — 히어로 위 큰 로고로 대체 */
+.app-brand-hidden {
+  visibility: hidden;
 }
 
 .app-nav {
@@ -636,41 +760,45 @@ button:disabled {
   font-weight: 900;
 }
 
-.auth-input,
-input[type="search"],
-input[type="email"],
-input[type="password"],
-input:not([type]),
-textarea,
-select {
-  width: 100%;
-  border: 1px solid rgb(186 230 253 / 0.9);
-  border-radius: 0.95rem;
-  background: rgb(255 255 255 / 0.88);
-  color: var(--ink);
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.86), 0 8px 20px rgb(7 89 133 / 0.07);
-  outline: none;
-}
+/* @layer base로 감싸 컴포넌트의 Tailwind 유틸(rounded-full·bg 등)이 이기도록 함.
+   유틸 클래스가 없는 입력은 base 기본 스타일을 그대로 유지. */
+@layer base {
+  .auth-input,
+  input[type="search"],
+  input[type="email"],
+  input[type="password"],
+  input:not([type]),
+  textarea,
+  select {
+    width: 100%;
+    border: 1px solid rgb(186 230 253 / 0.9);
+    border-radius: 0.95rem;
+    background: rgb(255 255 255 / 0.88);
+    color: var(--ink);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.86), 0 8px 20px rgb(7 89 133 / 0.07);
+    outline: none;
+  }
 
-.auth-input {
-  padding: 0.82rem 0.9rem;
-}
+  .auth-input {
+    padding: 0.82rem 0.9rem;
+  }
 
-input[type="search"],
-textarea,
-select {
-  backdrop-filter: blur(10px) saturate(1.08);
-}
+  input[type="search"],
+  textarea,
+  select {
+    backdrop-filter: blur(10px) saturate(1.08);
+  }
 
-.auth-input:focus,
-input[type="search"]:focus,
-input[type="email"]:focus,
-input[type="password"]:focus,
-input:not([type]):focus,
-textarea:focus,
-select:focus {
-  border-color: var(--brand-medium);
-  box-shadow: 0 0 0 4px var(--focus-ring), 0 10px 24px rgb(7 89 133 / 0.1);
+  .auth-input:focus,
+  input[type="search"]:focus,
+  input[type="email"]:focus,
+  input[type="password"]:focus,
+  input:not([type]):focus,
+  textarea:focus,
+  select:focus {
+    border-color: var(--brand-medium);
+    box-shadow: 0 0 0 4px var(--focus-ring), 0 10px 24px rgb(7 89 133 / 0.1);
+  }
 }
 
 .auth-submit,
@@ -747,15 +875,33 @@ main:not(.auth-shell) .bg-brand-50\/40 {
   backdrop-filter: blur(10px) saturate(1.08);
 }
 
-/* 통계 페이지 — 배경 위에서 카드가 흐릿하고 경계(흰 테두리)가 안 보이는 문제 해결.
-   카드를 거의 불투명하게 + 슬레이트 구분선으로 섹션이 또렷하게 나뉘도록 한다.
-   통계 카드는 모두 .bg-white.shadow-card를 갖고 있어 단일 선택자로 커버(유틸 조합 나열 불필요).
-   위 글래스 오버라이드와 동일 특이도이며 뒤에 선언해 우선 적용된다. */
+/* 통계 페이지 — 표 카드(p-4 없음)도 차트 카드와 동일한 글래스(0.88) 투명도로 통일.
+   차트 카드는 .p-4.shadow-card 글래스 규칙(0.88)에 걸리지만 표 카드는 p-4가 없어
+   여기서 동일 값을 명시해 맞춘다(테두리는 배경 위 가독성 위해 슬레이트로 유지). */
 main.stats-page .bg-white.shadow-card {
-  background-color: rgb(255 255 255 / 0.98);
-  border: 1px solid rgb(148 163 184 / 0.32);
+  background-color: rgb(255 255 255 / 0.88);
+  border: 1px solid rgb(148 163 184 / 0.28);
   box-shadow: 0 6px 22px rgb(15 23 42 / 0.08);
-  backdrop-filter: blur(6px) saturate(1.05);
+  backdrop-filter: blur(15px) saturate(1.14);
+}
+
+/* 통계 데이터 표 — 행 hover 강조로 가독성 향상(히트맵 셀은 자체 배경이라 영향 미미) */
+main.stats-page tbody tr:hover {
+  background-color: rgb(240 249 255); /* sky-50 */
+}
+
+/* 데이터 표(히트맵=border-separate 제외) — 박스 안에서 표를 좌우로 들여 바깥 여백 + 또렷한 행 구분선 */
+main.stats-page table:not([class*='border-separate']) {
+  width: calc(100% - 3rem);
+  margin-left: 1.5rem;
+  margin-right: 1.5rem;
+}
+main.stats-page table:not([class*='border-separate']) tbody tr {
+  border-bottom: 1px solid rgb(226 232 240); /* slate-200 — 마지막 행 포함 */
+}
+main.stats-page table:not([class*='border-separate']) th,
+main.stats-page table:not([class*='border-separate']) td {
+  text-align: center;
 }
 
 .gallery-page {
@@ -812,6 +958,935 @@ main.stats-page .bg-white.shadow-card {
 @media (min-width: 1760px) {
   .gallery-track {
     grid-auto-columns: 15.3%;
+  }
+}
+
+/* ===== 리스트형 대시보드 (Figma "Phonics" 참고) — 세로 스크롤 ===== */
+/* 카드형 갤러리의 뷰포트 고정 flex 규칙을 무효화하고 자연스러운 문서 흐름 + 스크롤로 전환 */
+/* 리스트형은 히어로를 풀블리드(100%)로 깔기 위해 페이지를 전체 폭으로.
+   상단으로 헤더 높이만큼 끌어올려 히어로 이미지가 헤더 뒤까지 깔리게 함(헤더는 투명 오버레이). */
+.gallery-page.gallery-page-list {
+  display: block;
+  flex: none;
+  min-height: 0;
+  width: 100%;
+  max-width: none;
+  margin: calc(-4.5rem - env(safe-area-inset-top)) 0 0;
+  padding: 0 0 8px;
+}
+
+/* 리스트형 대시보드 — 전체 영상 배경 대신 흰색 페이지(헤더 포함). 영상은 불투명 배경으로 가려짐 */
+.app-shell-dash {
+  background: #ffffff;
+}
+
+/* 리스트형에선 헤더 폭을 콘텐츠 폭(78rem)에 맞춰 로고·컨트롤이 콘텐츠와 정렬 */
+.app-shell-dash .app-topbar-inner {
+  max-width: 78rem;
+  /* 헤더 아래 여백을 위(top padding)와 동일하게 */
+  padding-bottom: calc(0.5rem + env(safe-area-inset-top));
+}
+
+/* 리스트형 푸터 — 배너와 여백 + 구분선 + 안내·카피라이트 좌우 배치 */
+.app-shell-dash .app-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem 1.5rem;
+  max-width: 78rem;
+  margin-top: 2.4rem;
+  padding: 1.4rem 0 2rem;
+  /* 아래 푸터 텍스트와 동일한 컬러 */
+  border-top: 1px solid #102a43;
+  text-align: left;
+}
+
+.app-shell-dash .app-footer-copy {
+  margin-top: 0;
+}
+
+.gallery-dash {
+  display: flex;
+  flex-direction: column;
+  gap: 2.4rem;
+}
+
+/* 히어로는 풀블리드(전체 폭), 그 아래 콘텐츠 섹션만 가운데 정렬 + 폭 제한 */
+.gallery-dash > .dash-section,
+.gallery-dash > .dash-columns,
+.gallery-dash > .dash-promo {
+  width: calc(100% - 2rem);
+  max-width: 78rem;
+  margin-inline: auto;
+}
+
+/* 영역별 섹션은 전체 폭 — 헤더는 그리드 정렬, 레일은 좌우 끝까지 full-bleed */
+.gallery-dash > .dash-section-bleed {
+  width: 100%;
+  max-width: none;
+  margin-inline: 0;
+  padding-inline: 0;
+}
+
+/* 상단 히어로 — 일러스트 배경 + 헤드라인 + 캐릭터/로고 (전체 폭) */
+.dash-hero {
+  position: relative;
+  display: flex;
+  align-items: center;
+  /* 캐릭터가 배경 밖(아래)으로 튀어나오도록 클립 해제 + 아래 섹션 위로 올라오게 */
+  overflow: visible;
+  z-index: 2;
+  min-height: clamp(320px, 33vw, 460px);
+}
+
+/* 배경 이미지·스크림은 히어로 사각형 안으로만 보이게 별도 클립 */
+.dash-hero-bg,
+.dash-hero-scrim {
+  border-radius: inherit;
+}
+
+.dash-hero-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  box-shadow: 0 14px 34px rgb(7 89 133 / 0.2);
+}
+
+.dash-hero-scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    rgb(6 20 40 / 0.58) 0%,
+    rgb(6 20 40 / 0.34) 44%,
+    rgb(6 20 40 / 0) 68%
+  );
+}
+
+/* 로그인 애니메이션 스프라이트(배경 div) — 왼쪽으로 이동 + 배경 하단 밖으로 더 내림 */
+.dash-hero-chars {
+  position: absolute;
+  right: clamp(4rem, 16vw, 18rem);
+  bottom: clamp(-7rem, -5.2vw, -4.5rem);
+  height: 104%;
+  aspect-ratio: 622 / 450;
+  z-index: 3;
+  pointer-events: none;
+  filter: drop-shadow(0 12px 14px rgb(7 89 133 / 0.22));
+}
+
+/* 카피는 콘텐츠 섹션과 동일한 그리드(가운데 78rem)에 맞춰 왼쪽 정렬 */
+.dash-hero-copy {
+  position: relative;
+  z-index: 2;
+  width: calc(100% - 2rem);
+  max-width: 78rem;
+  margin-inline: auto;
+  padding-block: 2rem;
+}
+
+/* 히어로 헤드라인 위 로고 — 헤더 로고(56px)보다 크게 */
+.dash-hero-logo {
+  display: block;
+  height: clamp(92px, 10vw, 140px);
+  width: auto;
+  object-fit: contain;
+  margin-bottom: 1rem;
+  filter: drop-shadow(0 2px 10px rgb(0 0 0 / 0.3));
+}
+
+.dash-hero-copy h1,
+.dash-hero-copy p {
+  max-width: 32rem;
+}
+
+.dash-hero-copy h1 {
+  margin: 0;
+  color: #fff;
+  font-size: clamp(1.55rem, 2.5vw, 2.3rem);
+  font-weight: 800;
+  line-height: 1.16;
+  text-shadow: 0 2px 10px rgb(0 0 0 / 0.35);
+}
+
+.dash-hero-copy p {
+  margin: 0.7rem 0 0;
+  color: rgb(255 255 255 / 0.9);
+  font-size: clamp(0.85rem, 1vw, 1rem);
+  font-weight: 600;
+  max-width: 30rem;
+  line-height: 1.4;
+  text-shadow: 0 1px 6px rgb(0 0 0 / 0.35);
+}
+
+.dash-hero-cta {
+  margin-top: 1.3rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  background: #fff;
+  color: #102a43;
+  border: none;
+  border-radius: 999px;
+  padding: 0.75rem 1.45rem;
+  font-weight: 800;
+  font-size: 0.95rem;
+  box-shadow: 0 8px 18px rgb(7 89 133 / 0.28);
+  transition: transform 0.15s ease;
+}
+
+.dash-hero-cta:hover {
+  transform: translateY(-2px);
+}
+
+.dash-hero-cta svg {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+@media (max-width: 720px) {
+  .dash-hero-chars {
+    display: none;
+  }
+
+  .dash-hero-copy {
+    max-width: 100%;
+  }
+
+  .dash-hero-scrim {
+    background: rgb(6 20 40 / 0.48);
+  }
+}
+
+.dash-section {
+  min-width: 0;
+}
+
+.dash-head {
+  margin-bottom: 1.1rem;
+}
+
+.dash-head h2 {
+  margin: 0;
+  font-size: 1.55rem;
+  font-weight: 800;
+  color: #191b23;
+}
+
+.dash-head p {
+  margin: 0.3rem 0 0;
+  font-size: 0.95rem;
+  color: #414754;
+}
+
+/* 이달의 신규 파닉스 — 밝은 컬러 배너 3종 */
+.dash-banners {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.1rem;
+}
+
+@media (max-width: 900px) {
+  .dash-banners {
+    grid-template-columns: 1fr;
+  }
+}
+
+.event-banner {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 158px;
+  border: none;
+  border-radius: 28px;
+  padding: 1.5rem 1.6rem;
+  padding-right: 6.5rem;
+  text-align: left;
+  overflow: hidden;
+  box-shadow: 0 8px 22px rgb(15 23 42 / 0.08);
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.event-banner-art {
+  position: absolute;
+  right: calc(2.75rem - 20px);
+  top: 50%;
+  width: 6.25rem;
+  height: 6.5rem;
+  transform: translate3d(0, calc(-50% - 0.35rem), 0);
+  pointer-events: none;
+  transition: transform 0.2s ease;
+}
+
+.event-banner:hover .event-banner-art {
+  transform: translate3d(0, calc(-50% - 0.45rem), 0) scale(1.02);
+}
+
+.event-banner-art-svg {
+  overflow: visible;
+  shape-rendering: geometricPrecision;
+}
+
+.event-banner-art-block-label {
+  font-family: var(--font-sans);
+  font-weight: 900;
+  font-size: 14px;
+}
+
+.event-banner-art-letter,
+.event-banner-art-medium,
+.event-banner-art-small,
+.event-banner-art-tiny {
+  font-family: var(--font-sans);
+  font-weight: 950;
+  paint-order: stroke;
+  stroke: rgb(255 255 255 / 0.24);
+  stroke-width: 1.5px;
+}
+
+.event-banner-art-letter {
+  fill: #fff;
+  font-size: 22px;
+}
+
+.event-banner-art-medium {
+  fill: #102a43;
+  font-size: 15px;
+}
+
+.event-banner-art-small {
+  fill: #123047;
+  font-size: 11px;
+}
+
+.event-banner-art-tiny {
+  fill: #123047;
+  font-size: 10px;
+}
+
+.event-banner-art-plain {
+  font-family: var(--font-sans);
+  font-weight: 800;
+  font-size: 15px;
+  fill: #191b23;
+  letter-spacing: -0.02em;
+}
+
+.event-banner:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 30px rgb(15 23 42 / 0.14);
+}
+
+.event-banner-body {
+  position: relative;
+  z-index: 1;
+}
+
+.event-banner-body h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: #191b23;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.event-banner-body p {
+  margin: 0.3rem 0 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: rgb(25 27 35 / 0.72);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.event-banner-btn {
+  position: relative;
+  z-index: 1;
+  margin-top: 1.1rem;
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 999px;
+  background: #fff;
+  color: #191b23;
+  box-shadow:
+    0 4px 6px -1px rgb(0 0 0 / 0.1),
+    0 2px 4px -2px rgb(0 0 0 / 0.1);
+  transition: transform 0.15s ease;
+}
+
+.event-banner:hover .event-banner-btn {
+  transform: translateX(3px);
+}
+
+.event-banner-btn svg {
+  width: 1.15rem;
+  height: 1.15rem;
+}
+
+/* 영역별 맞춤 파닉스 놀이 — 헤더(타이틀 + 우측 페이저) + 한 줄 가로 레일 */
+.dash-head-rail {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  /* 헤더(타이틀·탭·버튼)는 콘텐츠 그리드(78rem) 안에 가운데 정렬 */
+  max-width: 78rem;
+  margin-inline: auto;
+  width: calc(100% - 2rem);
+}
+
+.dash-head-top {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+/* 레일 ‹ › 이동 버튼(인디케이터 없음) */
+.dash-rail-nav {
+  display: flex;
+  flex-shrink: 0;
+  gap: 0.5rem;
+}
+
+.dash-head-rail .dash-head-text {
+  min-width: 0;
+}
+
+/* 레벨 탭 — 전체 레벨 / ECP1 … (헤더 드롭다운 대체) */
+.dash-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.dash-tab {
+  border: 1px solid rgb(226 232 240);
+  background: #fff;
+  color: #475569;
+  border-radius: 999px;
+  padding: 0.42rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.dash-tab:hover {
+  border-color: var(--brand-medium);
+  color: var(--brand-strong);
+}
+
+.dash-tab.is-active {
+  background: var(--brand-medium);
+  border-color: var(--brand-medium);
+  color: #fff;
+}
+
+/* 가로 레일 — 스크롤바 숨기고 ‹ › 버튼으로만 페이지 이동 */
+.dash-rail {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 1.1rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  /* 왼쪽 패딩 = 그리드 여백(첫 카드가 타이틀과 정렬) → 스크롤하면 패딩이 밀려나며 100% 폭 사용 */
+  padding: 0.4rem 0 0.9rem max(1rem, calc((100% - 78rem) / 2));
+  scroll-snap-type: x proximity;
+  scroll-padding-left: max(1rem, calc((100% - 78rem) / 2));
+  scrollbar-width: none; /* Firefox — 스크롤바 숨김 */
+  -ms-overflow-style: none;
+  /* 태블릿 — 좌우 손가락 스와이프로 이동(관성 스크롤) */
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+}
+
+.dash-rail::-webkit-scrollbar {
+  display: none; /* WebKit — 스크롤바 숨김 */
+}
+
+.dash-rail > .play-card {
+  flex: 0 0 clamp(180px, 15vw, 224px);
+  scroll-snap-align: start;
+}
+
+.play-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  border: none;
+  background: transparent;
+  padding: 0;
+  text-align: center;
+  transition: transform 0.15s ease;
+}
+
+.play-card:hover {
+  transform: translateY(-3px);
+}
+
+.play-card-thumb {
+  position: relative;
+  width: 100%;
+  /* 세로로 긴 썸네일(Figma 4:5) */
+  aspect-ratio: 4 / 5;
+  border-radius: 22px;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 8px 20px rgb(15 23 42 / 0.1);
+}
+
+.play-card:hover .play-card-thumb {
+  box-shadow: 0 14px 28px rgb(15 23 42 / 0.16);
+}
+
+.play-card-thumb-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.phonics-thumb {
+  display: block;
+  overflow: hidden;
+  object-fit: cover;
+  image-rendering: auto;
+}
+
+img.phonics-thumb,
+.play-card-thumb-img,
+.rank-thumb-img,
+.game-card-thumb {
+  /* 큰 PNG를 작게 줄일 때 브라우저 보간 흐림 완화 */
+  image-rendering: -webkit-optimize-contrast;
+}
+
+.phonics-thumb-letter,
+.phonics-thumb-medium,
+.phonics-thumb-small,
+.phonics-thumb-tiny {
+  font-family: var(--font-sans);
+  font-weight: 950;
+  paint-order: stroke;
+  stroke: rgb(255 255 255 / 0.28);
+  stroke-width: 2px;
+}
+
+.phonics-thumb-letter {
+  fill: #fff;
+  font-size: 34px;
+}
+
+.phonics-thumb-medium {
+  fill: #102a43;
+  font-size: 24px;
+}
+
+.phonics-thumb-small {
+  fill: #fff;
+  font-size: 17px;
+}
+
+.phonics-thumb-tiny {
+  fill: #fff;
+  font-size: 15px;
+}
+
+.play-card-thumb-icon {
+  color: rgb(255 255 255 / 0.92);
+  font-weight: 800;
+  font-size: 1.1rem;
+  letter-spacing: 0.06em;
+}
+
+/* 썸네일 위 재생 버튼(가운데) */
+.play-card-play {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.92);
+  color: #102a43;
+  box-shadow: 0 5px 14px rgb(7 89 133 / 0.28);
+  transition: transform 0.15s ease;
+}
+
+.play-card:hover .play-card-play {
+  transform: translate(-50%, -50%) scale(1.08);
+}
+
+.play-card-play svg {
+  width: 1.4rem;
+  height: 1.4rem;
+  margin-left: 2px;
+}
+
+.play-card-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 이번 주 인기 랭킹 / 나의 최근 플레이 — 2단 미니 리스트 */
+.dash-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2.4rem;
+}
+
+@media (max-width: 900px) {
+  .dash-columns {
+    grid-template-columns: 1fr;
+  }
+}
+
+.dash-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.rank-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+  text-align: left;
+  background: #fff;
+  border: 1px solid rgb(226 232 240 / 0.7);
+  border-radius: 18px;
+  padding: 0.7rem;
+  box-shadow: 0 4px 14px rgb(15 23 42 / 0.05);
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.rank-row:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgb(15 23 42 / 0.1);
+}
+
+/* 랭킹 순위 번호 — 제목 앞(행 맨 왼쪽) */
+.rank-no {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 1.9rem;
+  height: 1.9rem;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 800;
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.rank-no-gold {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.rank-no-silver {
+  background: #e2e8f0;
+  color: #475569;
+}
+
+.rank-no-bronze {
+  background: #fde3cf;
+  color: #c2410c;
+}
+
+.rank-thumb {
+  position: relative;
+  flex-shrink: 0;
+  width: 64px;
+  height: 64px;
+  border-radius: 14px;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+}
+
+.rank-thumb-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.rank-thumb-icon {
+  color: rgb(255 255 255 / 0.92);
+  font-weight: 800;
+  font-size: 0.8rem;
+  letter-spacing: 0.05em;
+}
+
+.rank-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.28rem;
+}
+
+/* 랭킹·최근 행의 레벨·학습종류 태그 — 별점/플레이시간과 같은 줄, 구분선 뒤 */
+.rank-tags {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.rank-tags::before {
+  content: '';
+  width: 1px;
+  height: 0.8rem;
+  margin-right: 0.25rem;
+  background: rgb(148 163 184 / 0.5);
+}
+
+.rank-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.rank-head h4 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rank-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.85rem;
+  color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 플레이 횟수 + 앞의 초록 그라데이션 세모(모서리 둥글게) */
+.rank-plays {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  /* 별점처럼 진하게 */
+  color: #475569;
+  font-weight: 700;
+}
+
+.rank-play-ic {
+  width: 1.3rem;
+  height: 1.3rem;
+  flex-shrink: 0;
+}
+
+/* 최근 플레이 시계 아이콘 */
+.rank-clock-ic {
+  width: 1.05rem;
+  height: 1.05rem;
+  flex-shrink: 0;
+  color: #94a3b8;
+}
+
+/* 플레이 횟수 옆 별점 */
+.rank-rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  color: #475569;
+  font-weight: 700;
+}
+
+.rank-rating::before {
+  content: '';
+  width: 1px;
+  height: 0.8rem;
+  margin-right: 0.4rem;
+  background: rgb(148 163 184 / 0.5);
+}
+
+.rank-pill {
+  flex-shrink: 0;
+  border-radius: 999px;
+  padding: 0.16rem 0.6rem;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+/* 행 우측 재생(시작) 버튼 — 평소엔 옅은 하늘색, hover 시 브랜드 컬러로 */
+.rank-cta {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  /* 우측 여백 */
+  margin-right: 0.7rem;
+  border-radius: 999px;
+  background: #e0f2fe;
+  color: #0ea5e9;
+  transition:
+    transform 0.15s ease,
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.rank-row:hover .rank-cta {
+  transform: scale(1.06);
+  background: var(--brand-medium);
+  color: #fff;
+}
+
+.rank-cta svg {
+  width: 1.05rem;
+  height: 1.05rem;
+  margin-left: 1px;
+}
+
+.rank-pill-gold {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.rank-pill-silver {
+  background: #e2e8f0;
+  color: #475569;
+}
+
+.rank-pill-bronze {
+  background: #fde3cf;
+  color: #c2410c;
+}
+
+.rank-pill-sky {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.rank-pill-mint {
+  background: #d1fae5;
+  color: #047857;
+}
+
+/* 하단 프로모 배너 — Figma "POLY Phonics Games" (노랑 배경 + 카피 + 원형 캐릭터 그래픽) */
+.dash-promo {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  overflow: hidden;
+  background: #ffde00;
+  border-radius: 32px;
+  /* 고정 높이 — 캐릭터 이미지가 이보다 커서 아래가 잘려 나가도록 */
+  padding: 0 clamp(1.5rem, 3vw, 3rem);
+  height: clamp(185px, 21vw, 250px);
+  box-shadow: 0 12px 30px rgb(180 140 0 / 0.24);
+}
+
+.dash-promo-copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.dash-promo-copy h2 {
+  margin: 0;
+  color: #191b23;
+  font-size: clamp(1.4rem, 2.2vw, 2rem);
+  font-weight: 800;
+}
+
+.dash-promo-copy p {
+  margin: 0.7rem 0 0;
+  color: rgb(25 27 35 / 0.8);
+  font-size: clamp(0.95rem, 1.2vw, 1.15rem);
+  font-weight: 600;
+  line-height: 1.4;
+  max-width: 34rem;
+}
+
+.dash-promo-cta {
+  margin-top: 1.5rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  background: #fff;
+  color: #191b23;
+  border: none;
+  border-radius: 999px;
+  padding: 0.85rem 1.7rem;
+  font-weight: 800;
+  font-size: 1rem;
+  /* 신규 파닉스 카드 버튼(.event-banner-btn)과 동일한 그림자·효과 */
+  box-shadow:
+    0 4px 6px -1px rgb(0 0 0 / 0.1),
+    0 2px 4px -2px rgb(0 0 0 / 0.1);
+  transition: transform 0.15s ease;
+}
+
+.dash-promo-cta:hover {
+  transform: translateX(3px);
+}
+
+.dash-promo-cta svg {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.dash-promo-decor {
+  flex-shrink: 0;
+  /* 배너보다 크게 + 위로 올려 배치(위쪽이 배너 밖으로 잘려 나감) */
+  align-self: flex-start;
+  height: clamp(270px, 34vw, 430px);
+  width: auto;
+  object-fit: contain;
+  margin-top: clamp(-9.5rem, -8.7vw, -6.5rem);
+}
+
+@media (max-width: 720px) {
+  .dash-promo {
+    flex-direction: column;
+    text-align: center;
+    align-items: center;
+    height: auto;
+    padding: 1.2rem clamp(1.5rem, 3vw, 3rem);
+  }
+
+  .dash-promo-copy p {
+    max-width: 100%;
+  }
+
+  .dash-promo-decor {
+    align-self: center;
+    height: 190px;
+    margin-top: 0;
   }
 }
 
@@ -1245,6 +2320,28 @@ main.stats-page .bg-white.shadow-card {
   font-size: 0.75rem;
   font-weight: 900;
 }
+
+/* 종류별 배지 색상 — 부드러운 톤으로 구분 */
+.kind-badge-html {
+  background: rgb(224 242 254);
+  color: #0369a1;
+} /* 인터랙티브 — sky */
+.kind-badge-zip {
+  background: rgb(224 231 255);
+  color: #4338ca;
+} /* 게임 패키지 — indigo */
+.kind-badge-video {
+  background: rgb(204 251 241);
+  color: #0f766e;
+} /* 비디오 — teal */
+.kind-badge-audio {
+  background: rgb(254 243 199);
+  color: #b45309;
+} /* 오디오 — amber */
+.kind-badge-url {
+  background: rgb(226 232 240);
+  color: #475569;
+} /* 웹 링크 — slate */
 
 /* 카드 하단 레벨/게임종류/AI 태그 — 좌측 정렬 */
 .game-card-tags {

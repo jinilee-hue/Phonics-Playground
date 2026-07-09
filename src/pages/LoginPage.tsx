@@ -1,45 +1,14 @@
 import { useQueryClient } from '@tanstack/react-query'
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { api } from '../api/client'
 import type { User } from '../api/types'
 import { homeFor } from '../auth/auth'
+import { AuthDialog, type AuthMode } from '../components/AuthDialog'
+import { CharacterSprite } from '../components/CharacterSprite'
 import { useT } from '../i18n'
 import logoUrl from '../assets/logo.png'
 import bgVideo from '../assets/login_bg.mp4'
-import charactersSprite from '../assets/login-characters-anim.png'
-
-// 캐릭터 스프라이트 시트: 6열 × 6행 = 36프레임(각 622×450), 프레임당 50ms
-const SPRITE_COLS = 6
-const SPRITE_ROWS = 6
-const SPRITE_FRAMES = 36
-const SPRITE_FRAME_MS = 50
-
-/** 스프라이트 프레임을 순환 재생해 캐릭터가 움직이게(눈 깜박임 등) 한다. */
-function CharacterSprite({ className }: { className?: string }) {
-  const [frame, setFrame] = useState(0)
-  useEffect(() => {
-    const id = window.setInterval(
-      () => setFrame((f) => (f + 1) % SPRITE_FRAMES),
-      SPRITE_FRAME_MS,
-    )
-    return () => window.clearInterval(id)
-  }, [])
-  const col = frame % SPRITE_COLS
-  const row = Math.floor(frame / SPRITE_COLS)
-  return (
-    <div
-      aria-hidden="true"
-      className={className}
-      style={{
-        backgroundImage: `url(${charactersSprite})`,
-        backgroundSize: `${SPRITE_COLS * 100}% ${SPRITE_ROWS * 100}%`,
-        backgroundPosition: `${(col / (SPRITE_COLS - 1)) * 100}% ${(row / (SPRITE_ROWS - 1)) * 100}%`,
-        backgroundRepeat: 'no-repeat',
-      }}
-    />
-  )
-}
 
 const ICON_ID = (
   <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className="h-5 w-5">
@@ -89,6 +58,7 @@ export function LoginPage() {
   const [error, setError] = useState('')
   const [fieldErr, setFieldErr] = useState<{ id?: string; password?: string }>({})
   const [busy, setBusy] = useState(false)
+  const [authView, setAuthView] = useState<AuthMode | null>(null)
 
   const qc = useQueryClient()
   const navigate = useNavigate()
@@ -133,8 +103,8 @@ export function LoginPage() {
   const fieldCls = (hasErr: boolean) =>
     `h-12 w-full rounded-full border pl-12 text-[20px] text-[#102a43] placeholder:text-[#8fbfe0] focus:outline-none ${
       hasErr
-        ? 'border-[#ff9d9d] bg-[#fff4f4] focus:border-[#ff6b6b]'
-        : 'border-[#c3e0f5] bg-[#eaf4fd] focus:border-[#0ea5e9]'
+        ? 'border-[#ff9d9d] bg-[#fff4f4] focus:border-[#ff6b6b] focus:bg-white'
+        : 'border-[#c3e0f5] bg-[#eaf4fd] focus:border-[#0ea5e9] focus:bg-white'
     }`
 
   // 필드 아래 커스텀 에러 메시지 (앱 톤 — 둥근 배지 스타일)
@@ -272,33 +242,37 @@ export function LoginPage() {
 
           {/* 회원가입 · 아이디찾기 · 비밀번호찾기 */}
           <div className="mt-[clamp(1.25rem,3vh,2.5rem)] flex items-center justify-center gap-3 text-[14px] text-[#102a43]">
-            <button type="button" className="hover:underline">
+            <button type="button" className="hover:underline" onClick={() => setAuthView('signup')}>
               회원가입
             </button>
             <span className="h-3.5 w-px bg-gray-300" />
-            <button type="button" className="hover:underline">
+            <button type="button" className="hover:underline" onClick={() => setAuthView('findId')}>
               아이디찾기
             </button>
             <span className="h-3.5 w-px bg-gray-300" />
-            <button type="button" className="hover:underline">
+            <button type="button" className="hover:underline" onClick={() => setAuthView('findPw')}>
               비밀번호찾기
             </button>
           </div>
 
-          {/* 이용약관 · 개인정보취급방침 */}
+          {/* 이용약관 · 개인정보취급방침 (Poly 공식 페이지, 새 탭) */}
           <div className="mt-[clamp(1rem,2.2vh,2rem)] flex gap-2.5">
-            <button
-              type="button"
-              className="h-12 flex-1 rounded-[10px] bg-[#eaf4fd] text-[14px] font-semibold text-[#0ea5e9] transition hover:bg-[#dcecfb]"
+            <a
+              href="https://www.poly-english.com/util/service.do"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="grid h-12 flex-1 place-items-center rounded-[10px] bg-[#eaf4fd] text-[14px] font-semibold text-[#0ea5e9] transition hover:bg-[#dcecfb]"
             >
               이용약관
-            </button>
-            <button
-              type="button"
-              className="h-12 flex-1 rounded-[10px] bg-[#eaf4fd] text-[14px] font-semibold text-[#0ea5e9] transition hover:bg-[#dcecfb]"
+            </a>
+            <a
+              href="https://www.poly-english.com/util/privacy.do"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="grid h-12 flex-1 place-items-center rounded-[10px] bg-[#eaf4fd] text-[14px] font-semibold text-[#0ea5e9] transition hover:bg-[#dcecfb]"
             >
               개인정보취급방침
-            </button>
+            </a>
           </div>
           </div>
         </div>
@@ -315,6 +289,8 @@ export function LoginPage() {
           태블릿(lg): max-w 48vw-160px → 왼쪽 끝 50vw+160px(버튼 경계, 안 가림).
           PC(xl+): max-w 48vw-140px → 왼쪽 끝 50vw+140px(20px 더 왼쪽, 박스와 겹침). */}
       <CharacterSprite className="pointer-events-none absolute bottom-[2vw] right-[2vw] z-20 hidden aspect-[622/450] w-[clamp(300px,40vw,820px)] max-w-[calc(48vw-160px)] drop-shadow-[0_18px_14px_rgba(0,0,0,0.38)] lg:block xl:max-w-[calc(48vw-140px)]" />
+
+      {authView && <AuthDialog mode={authView} onClose={() => setAuthView(null)} />}
     </main>
   )
 }

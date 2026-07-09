@@ -3,9 +3,15 @@ import { useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { api, ApiError } from '../api/client'
 import type { GalleryOut } from '../api/types'
-import { GameCard } from '../components/GameCard'
+import { EventBanner, GameCard, RankRow } from '../components/GameCard'
+import { PlayRail } from '../components/PlayRail'
 import { PlayModal } from '../components/PlayModal'
 import { useT } from '../i18n'
+import { useViewMode } from '../viewMode'
+import { CharacterSprite } from '../components/CharacterSprite'
+import heroVideo from '../assets/login_bg.mp4'
+import promoDecor from '../assets/promo-decor.png'
+import logoUrl from '../assets/logo.png'
 
 /** 뷰포트 폭 → 한 페이지에 꽉 보이는 열 수. index.css .gallery-track 브레이크포인트와 일치. */
 function computeColumns(): number {
@@ -53,9 +59,21 @@ function toRowMajorOrder<T>(items: T[], perPage: number): (T | null)[] {
 /** §6 갤러리 — 페이지 캐러셀(각 페이지 첫 카드 좌측 정렬 + 다음 카드 peek), 레벨 필터(TopBar, URL ?level) */
 export function GalleryPage() {
   const t = useT()
-  const [searchParams] = useSearchParams()
+  const viewMode = useViewMode()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [activeId, setActiveId] = useState<number | null>(null)
   const [page, setPage] = useState(0)
+
+  // URL 쿼리 하나 갱신(빈 값이면 제거) — TopBar와 상태 공유(레벨 탭에서 사용)
+  const setParam = (key: string, value: string) =>
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev)
+        value ? next.set(key, value) : next.delete(key)
+        return next
+      },
+      { replace: true },
+    )
 
   const { data, error, isLoading, refetch, isFetching } = useQuery<GalleryOut>({
     queryKey: ['gallery'],
@@ -69,16 +87,30 @@ export function GalleryPage() {
     (item) =>
       (level === '' || item.courseCode === level) && (skill === '' || item.skillLabel === skill),
   )
+  // 레벨 탭 옵션(ECP1…) — 갤러리 데이터의 courseCode에서 산출
+  const levels = [
+    ...new Set(items.map((i) => i.courseCode).filter((c): c is string => !!c)),
+  ].sort()
   const activeItem = activeId != null ? items.find((i) => i.id === activeId) ?? null : null
 
   // 캐러셀 계산 — 2행이므로 열 개수 = ceil(항목/2). 한 페이지 = perPage(열) × 2행.
   const perPage = useColumns()
   const numCols = Math.ceil(filtered.length / 2)
   const pageCount = Math.max(1, Math.ceil(numCols / perPage))
-  const safePage = Math.min(page, pageCount - 1)
 
-  // 레벨·학습종류 필터가 바뀌면 첫 페이지로.
-  useEffect(() => setPage(0), [level, skill])
+  // 카드형 페이저(리스트형은 세로 스크롤 대시보드라 페이징 없음)
+  const effectivePageCount = pageCount
+  const safePage = Math.min(page, effectivePageCount - 1)
+
+  // 리스트형 대시보드 데이터 — 신규 배너 3종 / 영역별 카드 그리드(전체) / 인기 랭킹 / 최근 플레이
+  const newItems = filtered.slice(0, 3)
+  const ranking = [...filtered].sort((a, b) => b.uses - a.uses).slice(0, 5)
+  const recent = filtered.slice(0, 5) // 디자인 모드 — 실제 플레이 기록이 없어 목업
+  const rankTone = (i: number): 'gold' | 'silver' | 'bronze' | 'sky' =>
+    i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : 'sky'
+
+  // 레벨·학습종류·뷰모드가 바뀌면 첫 페이지로.
+  useEffect(() => setPage(0), [level, skill, viewMode])
 
   // 열 1개 폭(카드폭 + gap)을 실측 → 정확한 px 이동량 계산(마지막 페이지도 좌측 정렬).
   const trackRef = useRef<HTMLDivElement>(null)
@@ -96,7 +128,7 @@ export function GalleryPage() {
     return () => window.removeEventListener('resize', measure)
   }, [filtered.length, perPage])
 
-  const goTo = (p: number) => setPage(Math.min(Math.max(p, 0), pageCount - 1))
+  const goTo = (p: number) => setPage(Math.min(Math.max(p, 0), effectivePageCount - 1))
 
   // 터치 기기: 좌우 스와이프로 페이지 이동(가로 이동 50px 이상).
   const touchStartX = useRef<number | null>(null)
@@ -115,7 +147,7 @@ export function GalleryPage() {
   const displayItems = toRowMajorOrder(filtered, perPage)
 
   return (
-    <main className="gallery-page">
+    <main className={`gallery-page${viewMode === 'list' ? ' gallery-page-list' : ''}`}>
       {data?.stale && (
         <div className="mb-4 rounded-xl bg-amber-50 px-4 py-2.5 text-sm text-amber-700">
           {t('gallery.stale')}
@@ -144,7 +176,142 @@ export function GalleryPage() {
         <p className="py-16 text-center text-gray-400">{t('gallery.noLevel')}</p>
       )}
 
-      {filtered.length > 0 && (
+      {/* 리스트형 — 세로 스크롤 대시보드(신규 배너 · 영역별 카드 그리드 · 인기 랭킹 · 최근 플레이) */}
+      {filtered.length > 0 && viewMode === 'list' && (
+        <div className="gallery-dash">
+          {/* Figma 상단 히어로 — 일러스트 배경 + 헤드라인 + 캐릭터/로고 */}
+          <div className="dash-hero">
+            <video
+              className="dash-hero-bg"
+              src={heroVideo}
+              autoPlay
+              muted
+              loop
+              playsInline
+              aria-hidden="true"
+            />
+            <span className="dash-hero-scrim" aria-hidden="true" />
+            <CharacterSprite className="dash-hero-chars" />
+            <div className="dash-hero-copy">
+              <img src={logoUrl} alt="POLY Phonics" className="dash-hero-logo" />
+              <h1>{t('hero.title')}</h1>
+              <p>{t('hero.sub')}</p>
+              <button
+                type="button"
+                className="dash-hero-cta"
+                onClick={() => newItems[0] && setActiveId(newItems[0].id)}
+              >
+                {t('hero.cta')}
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
+                  <path
+                    d="M5 12h13M13 6l6 6-6 6"
+                    stroke="currentColor"
+                    strokeWidth="2.2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <section className="dash-section">
+            <header className="dash-head">
+              <h2>{t('dash.new.title')}</h2>
+              <p>{t('dash.new.sub')}</p>
+            </header>
+            <div className="dash-banners">
+              {newItems.map((item, i) => (
+                <EventBanner
+                  key={item.id}
+                  item={item}
+                  index={i}
+                  onPlay={(it) => setActiveId(it.id)}
+                />
+              ))}
+            </div>
+          </section>
+
+          <PlayRail
+            title={t('dash.grid.title')}
+            subtitle={t('dash.grid.sub')}
+            items={filtered}
+            levels={levels}
+            activeLevel={level}
+            onLevel={(v) => setParam('level', v)}
+            onPlay={(it) => setActiveId(it.id)}
+          />
+
+          <div className="dash-columns">
+            <section className="dash-section">
+              <header className="dash-head">
+                <h2>{t('dash.ranking.title')}</h2>
+                <p>{t('dash.ranking.sub')}</p>
+              </header>
+              <div className="dash-list">
+                {ranking.map((item, i) => (
+                  <RankRow
+                    key={item.id}
+                    item={item}
+                    rank={i + 1}
+                    pillTone={rankTone(i)}
+                    meta={t('dash.plays', { n: item.uses.toLocaleString() })}
+                    rating={
+                      item.ratingCount > 0 && item.ratingAvg != null ? item.ratingAvg : undefined
+                    }
+                    onPlay={(it) => setActiveId(it.id)}
+                  />
+                ))}
+              </div>
+            </section>
+
+            <section className="dash-section">
+              <header className="dash-head">
+                <h2>{t('dash.recent.title')}</h2>
+                <p>{t('dash.recent.sub')}</p>
+              </header>
+              <div className="dash-list">
+                {recent.map((item, i) => (
+                  <RankRow
+                    key={item.id}
+                    item={item}
+                    meta={t('dash.lastPlayed', { t: t(`dash.time.${i}`) })}
+                    onPlay={(it) => setActiveId(it.id)}
+                  />
+                ))}
+              </div>
+            </section>
+          </div>
+
+          {/* 하단 프로모 배너 — Figma "POLY Phonics Games" */}
+          <div className="dash-promo">
+            <div className="dash-promo-copy">
+              <h2>{t('promo.title')}</h2>
+              <p>{t('promo.sub')}</p>
+              <button
+                type="button"
+                className="dash-promo-cta"
+                onClick={() => ranking[0] && setActiveId(ranking[0].id)}
+              >
+                {t('hero.cta')}
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
+                  <path
+                    d="M5 12h13M13 6l6 6-6 6"
+                    stroke="currentColor"
+                    strokeWidth="2.2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </button>
+            </div>
+            <img className="dash-promo-decor" src={promoDecor} alt="" />
+          </div>
+        </div>
+      )}
+
+      {/* 카드형 — 페이지 캐러셀 */}
+      {filtered.length > 0 && viewMode === 'gallery' && (
         <div className="gallery-viewport" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
           <div
             ref={trackRef}
@@ -165,14 +332,14 @@ export function GalleryPage() {
         </div>
       )}
 
-      {filtered.length > 0 && (
+      {filtered.length > 0 && viewMode === 'gallery' && (
         <div className="gallery-footerbar">
           <div className="gallery-footer-text">
             <p className="app-footer-notice">{t('footer.aiNotice')}</p>
             <p className="app-footer-copy">{t('footer.copyright')}</p>
           </div>
 
-          {pageCount > 1 && (
+          {effectivePageCount > 1 && (
             <div className="gallery-pager">
               <button
                 type="button"
@@ -192,7 +359,7 @@ export function GalleryPage() {
                 </svg>
               </button>
               <div className="gallery-dots" role="tablist" aria-label={t('gallery.page', { n: '' })}>
-                {Array.from({ length: pageCount }, (_, i) => (
+                {Array.from({ length: effectivePageCount }, (_, i) => (
                   <button
                     key={i}
                     type="button"
@@ -210,7 +377,7 @@ export function GalleryPage() {
                 type="button"
                 className="gallery-nav"
                 onClick={() => goTo(safePage + 1)}
-                disabled={safePage >= pageCount - 1}
+                disabled={safePage >= effectivePageCount - 1}
                 aria-label={t('gallery.next')}
               >
                 <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">

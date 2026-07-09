@@ -3,6 +3,9 @@ import type { GalleryItem, Kind } from '../api/types'
 import { useLang } from '../i18n'
 import { translateContent } from '../contentI18n'
 import starIcon from '../assets/ic_star.png'
+import { getGeneratedThumbUrl } from '../gameThumbnails'
+import { EventBannerArt } from './EventBannerArt'
+import { PhonicsThumbnail } from './PhonicsThumbnail'
 
 export const KIND_LABEL: Record<Kind, string> = {
   html: 'HTML',
@@ -30,25 +33,10 @@ const KIND_GRADIENT: Record<Kind, string> = {
   url: 'from-pink-400 to-pink-600',
 }
 
-const KIND_ICON: Record<Kind, string> = {
-  html: 'HTML',
-  zip: 'ZIP',
-  video: 'VID',
-  audio: 'AUD',
-  url: 'URL',
-}
-
-const KIND_THUMB_META: Record<Kind, { title: string; subtitle: string }> = {
-  html: { title: 'Interactive', subtitle: 'HTML game' },
-  zip: { title: 'Package', subtitle: 'ZIP bundle' },
-  video: { title: 'Watch', subtitle: 'Video lesson' },
-  audio: { title: 'Listen', subtitle: 'Audio clip' },
-  url: { title: 'Link', subtitle: 'Web activity' },
-}
-
 export function KindBadge({ kind }: { kind: Kind }) {
   // 배지도 필터 칩과 동일한 친화적 라벨로 통일(HTML/ZIP/URL → 인터랙티브/게임 패키지/웹 링크)
-  return <span className="kind-badge">{KIND_FILTER_LABEL[kind]}</span>
+  // 종류별로 색을 다르게(kind-badge-{kind})
+  return <span className={`kind-badge kind-badge-${kind}`}>{KIND_FILTER_LABEL[kind]}</span>
 }
 
 /**
@@ -85,7 +73,7 @@ function isBlankImage(img: HTMLImageElement): boolean {
   }
 }
 
-function Thumbnail({ item }: { item: GalleryItem }) {
+function Thumbnail({ item, className = 'game-card-thumb' }: { item: GalleryItem; className?: string }) {
   // 로드 에러 + 빈(균일) 이미지를 모두 fallback으로 처리한다.
   const [showFallback, setShowFallback] = useState(false)
   // 리렌더마다 ref 콜백이 재호출돼도 캔버스 디코드는 이미지당 한 번만 하도록 가드.
@@ -99,6 +87,19 @@ function Thumbnail({ item }: { item: GalleryItem }) {
     if (isBlankImage(img)) setShowFallback(true)
   }
 
+  const generatedThumbUrl = getGeneratedThumbUrl(item.id)
+  if (generatedThumbUrl && !showFallback) {
+    return (
+      <img
+        src={generatedThumbUrl}
+        alt=""
+        loading="lazy"
+        onError={() => setShowFallback(true)}
+        className={className}
+      />
+    )
+  }
+
   if (item.thumbUrl && !showFallback) {
     return (
       <img
@@ -108,25 +109,196 @@ function Thumbnail({ item }: { item: GalleryItem }) {
         ref={checkBlank}
         onLoad={(e) => checkBlank(e.currentTarget)}
         onError={() => setShowFallback(true)}
-        className="game-card-thumb"
+        className={className}
       />
     )
   }
 
-  const meta = KIND_THUMB_META[item.kind]
+  return <PhonicsThumbnail item={item} className={className} />
+}
+
+/** 신규 배너 색상 — Figma "이달의 신규 파닉스" 카드(노랑·초록·핑크…) 순환. */
+const EVENT_COLORS = ['#fff200', '#c0eb75', '#ffccd2', '#b8e2ff', '#ffd8a8']
+
+/** 리스트형 대시보드 — "이달의 신규 파닉스" 이벤트 배너(밝은 컬러 + 제목·소개 + 원형 화살표). */
+export function EventBanner({
+  item,
+  index = 0,
+  onPlay,
+}: {
+  item: GalleryItem
+  index?: number
+  onPlay: (item: GalleryItem) => void
+}) {
+  const lang = useLang()
 
   return (
-    <div
-      className={`game-card-placeholder game-card-placeholder-${item.kind} bg-gradient-to-br ${KIND_GRADIENT[item.kind]}`}
+    <button
+      type="button"
+      onClick={() => onPlay(item)}
+      className="event-banner"
+      style={{ backgroundColor: EVENT_COLORS[index % EVENT_COLORS.length] }}
     >
-      <div className="game-card-placeholder-frame" aria-hidden="true">
-        <span>{KIND_ICON[item.kind]}</span>
-      </div>
-      <div className="game-card-placeholder-copy">
-        <strong>{meta.title}</strong>
-        <small>{meta.subtitle}</small>
-      </div>
-    </div>
+      <EventBannerArt item={item} bannerColor={EVENT_COLORS[index % EVENT_COLORS.length]} />
+      <span className="event-banner-body">
+        <h3>{translateContent(item.title, lang)}</h3>
+        <p>{translateContent(item.description, lang)}</p>
+      </span>
+      <span className="event-banner-btn" aria-hidden="true">
+        <svg viewBox="0 0 24 24" focusable="false">
+          <path
+            d="M5 12h13M13 6l6 6-6 6"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </span>
+    </button>
+  )
+}
+
+/** 리스트형 대시보드 — "영역별 맞춤 파닉스 놀이" 카드(썸네일 위 + 제목 아래 중앙). */
+export function PlayCard({
+  item,
+  onPlay,
+}: {
+  item: GalleryItem
+  onPlay: (item: GalleryItem) => void
+}) {
+  const lang = useLang()
+
+  return (
+    <button type="button" onClick={() => onPlay(item)} className="play-card">
+      <span className={`play-card-thumb bg-gradient-to-br ${KIND_GRADIENT[item.kind]}`}>
+        <Thumbnail item={item} className="play-card-thumb-img" />
+        <span className="play-card-play" aria-hidden="true">
+          <svg viewBox="0 0 24 24" focusable="false">
+            <path
+              d="M9 7.4v9.2l8-4.6z"
+              fill="currentColor"
+              stroke="currentColor"
+              strokeWidth="3.6"
+              strokeLinejoin="round"
+              strokeLinecap="round"
+            />
+          </svg>
+        </span>
+      </span>
+      <span className="play-card-title">{translateContent(item.title, lang)}</span>
+    </button>
+  )
+}
+
+type PillTone = 'gold' | 'silver' | 'bronze' | 'sky' | 'mint'
+
+/** 리스트형 대시보드 — "인기 랭킹 / 최근 플레이" 미니 리스트 행(정사각 썸네일 + 제목·메타 + pill/순위). */
+export function RankRow({
+  item,
+  meta,
+  rank,
+  rating,
+  pill,
+  pillTone = 'sky',
+  onPlay,
+}: {
+  item: GalleryItem
+  meta: string
+  rank?: number
+  rating?: number
+  pill?: string
+  pillTone?: PillTone
+  onPlay: (item: GalleryItem) => void
+}) {
+  const lang = useLang()
+  const showSkillLabel = !!item.skillLabel && item.skillLabel !== item.skillCode
+  const hasTags = !!item.courseCode || showSkillLabel
+
+  return (
+    <button type="button" onClick={() => onPlay(item)} className="rank-row">
+      {rank != null && <span className={`rank-no rank-no-${pillTone}`}>{rank}</span>}
+      <span className={`rank-thumb bg-gradient-to-br ${KIND_GRADIENT[item.kind]}`}>
+        <Thumbnail item={item} className="rank-thumb-img" />
+      </span>
+      <span className="rank-body">
+        <span className="rank-head">
+          <h4>{translateContent(item.title, lang)}</h4>
+          {pill != null && <span className={`rank-pill rank-pill-${pillTone}`}>{pill}</span>}
+        </span>
+        <span className="rank-meta">
+          <span className="rank-plays">
+            {rank != null ? (
+              <svg className="rank-play-ic" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <defs>
+                  <linearGradient id="rankPlayGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0" stopColor="#5be584" />
+                    <stop offset="1" stopColor="#16a34a" />
+                  </linearGradient>
+                </defs>
+                <path
+                  d="M9 7.4v9.2l8-4.6z"
+                  fill="url(#rankPlayGrad)"
+                  stroke="url(#rankPlayGrad)"
+                  strokeWidth="4"
+                  strokeLinejoin="round"
+                  strokeLinecap="round"
+                />
+              </svg>
+            ) : (
+              <svg
+                className="rank-clock-ic"
+                viewBox="0 0 24 24"
+                fill="none"
+                aria-hidden="true"
+                focusable="false"
+              >
+                <circle cx="12" cy="12" r="8.5" stroke="currentColor" strokeWidth="2" />
+                <path
+                  d="M12 7.5V12l3 2"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            )}
+            {meta}
+          </span>
+          {rating != null && (
+            <span className="rank-rating">
+              <img src={starIcon} alt="" className="game-card-star" /> {rating.toFixed(1)}
+            </span>
+          )}
+          {hasTags && (
+            <span className="rank-tags">
+              {item.courseCode && (
+                <span className="game-tag game-tag-level">{item.courseCode}</span>
+              )}
+              {showSkillLabel && (
+                <span className="game-tag game-tag-skill-label">
+                  {translateContent(item.skillLabel, lang)}
+                </span>
+              )}
+            </span>
+          )}
+        </span>
+      </span>
+      {/* 재생(시작) 버튼 — 행 우측 끝 */}
+      <span className="rank-cta" aria-hidden="true">
+        <svg viewBox="0 0 24 24" focusable="false">
+          <path
+            d="M9 7.4v9.2l8-4.6z"
+            fill="currentColor"
+            stroke="currentColor"
+            strokeWidth="3.6"
+            strokeLinejoin="round"
+            strokeLinecap="round"
+          />
+        </svg>
+      </span>
+    </button>
   )
 }
 
@@ -146,7 +318,7 @@ export function GameCard({
   return (
     <button type="button" onClick={() => onPlay(item)} className="game-card">
       <div className="game-card-media">
-        <Thumbnail item={item} />
+        <Thumbnail item={item} className="game-card-thumb" />
         {/* 카드 전체가 클릭 버튼이므로 재생 아이콘은 장식용(pointer-events 없음) */}
         <span className="game-card-play" aria-hidden="true">
           <svg viewBox="0 0 24 24" focusable="false">

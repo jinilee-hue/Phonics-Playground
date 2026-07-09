@@ -1,11 +1,13 @@
 import { useQuery } from '@tanstack/react-query'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { NavLink, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { api } from '../api/client'
 import type { GalleryOut, Role, User } from '../api/types'
 import { useLogout } from '../auth/auth'
 import { LevelSelect } from './LevelSelect'
 import { SettingsModal } from './SettingsModal'
+import { StatsModal } from './StatsModal'
+import { useViewMode } from '../viewMode'
 import { useLang, useT } from '../i18n'
 import { translateContent } from '../contentI18n'
 import logoUrl from '../assets/logo.png'
@@ -26,6 +28,7 @@ export function TopBar({ user }: { user: User }) {
   const navigate = useNavigate()
   const logout = useLogout()
   const location = useLocation()
+  const viewMode = useViewMode()
   const [searchParams, setSearchParams] = useSearchParams()
 
   // 레벨 셀렉트는 갤러리 화면에서만 노출. 갤러리 캐시(['gallery'])를 공유해
@@ -69,23 +72,42 @@ export function TopBar({ user }: { user: User }) {
   }
 
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [statsOpen, setStatsOpen] = useState(false)
+
+  // 리스트형에서 스크롤을 내리면 헤더에 반투명 흰 배경이 깔린다.
+  const [scrolled, setScrolled] = useState(false)
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8)
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
 
   return (
     <>
-      <header className="app-topbar">
+      <header className={`app-topbar${scrolled ? ' is-scrolled' : ''}`}>
       <div className="app-topbar-inner">
-        <span className="app-brand">
+        {/* 리스트형 최상단(미스크롤)에선 헤더 로고를 숨기고 히어로 헤드라인 위 큰 로고로 대체 */}
+        <span
+          className={`app-brand${
+            onGallery && viewMode === 'list' && !scrolled ? ' app-brand-hidden' : ''
+          }`}
+        >
           <img src={logoUrl} alt="POLY Phonics" className="app-brand-logo" />
         </span>
-        <nav className="app-nav" aria-label={t('nav.gallery')}>
-          {TABS[user.role].map((tab) => (
-            <NavLink key={tab.to} to={tab.to} className="app-nav-link">
-              {t(tab.labelKey)}
-            </NavLink>
-          ))}
-        </nav>
+        {/* 리스트형 갤러리에선 갤러리/통계 토글을 숨기고, 통계는 우측 그래프 아이콘으로 노출 */}
+        {!(onGallery && viewMode === 'list') && (
+          <nav className="app-nav" aria-label={t('nav.gallery')}>
+            {TABS[user.role].map((tab) => (
+              <NavLink key={tab.to} to={tab.to} className="app-nav-link">
+                {t(tab.labelKey)}
+              </NavLink>
+            ))}
+          </nav>
+        )}
         <div className="app-user-menu">
-          {onGallery && levels.length > 0 && (
+          {/* 리스트형은 레벨 필터를 "영역별" 섹션 탭으로 옮겼으므로 헤더에선 숨김 */}
+          {onGallery && viewMode !== 'list' && levels.length > 0 && (
             <LevelSelect
               ariaLabel={t('topbar.levelFilter')}
               value={selectedLevel}
@@ -96,7 +118,8 @@ export function TopBar({ user }: { user: User }) {
               ]}
             />
           )}
-          {onGallery && skills.length > 0 && (
+          {/* 리스트형에선 학습 필터도 숨김(헤더 최소화) */}
+          {onGallery && viewMode !== 'list' && skills.length > 0 && (
             <LevelSelect
               ariaLabel={t('topbar.skillFilter')}
               value={selectedSkill}
@@ -116,6 +139,26 @@ export function TopBar({ user }: { user: User }) {
             </span>
             {user.name} <b>{t(ROLE_KEY[user.role])}</b>
           </span>
+          {/* 리스트형에서 통계 진입 — 그래프 아이콘(설정 버튼 앞, 관리자만). 라우트 이동 없이 모달 */}
+          {onGallery && viewMode === 'list' && user.role === 'admin' && (
+            <button
+              type="button"
+              onClick={() => setStatsOpen(true)}
+              className="app-settings"
+              aria-label={t('nav.stats')}
+              title={t('nav.stats')}
+            >
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
+                <path d="M4 20h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                <path
+                  d="M6 20v-6M12 20V7M18 20v-9"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+              </svg>
+            </button>
+          )}
           <button
             type="button"
             onClick={() => setSettingsOpen(true)}
@@ -162,6 +205,7 @@ export function TopBar({ user }: { user: User }) {
       </div>
       </header>
       {settingsOpen && <SettingsModal onClose={() => setSettingsOpen(false)} />}
+      {statsOpen && <StatsModal onClose={() => setStatsOpen(false)} />}
     </>
   )
 }

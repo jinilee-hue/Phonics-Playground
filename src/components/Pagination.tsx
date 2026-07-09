@@ -28,18 +28,22 @@ export function Pagination({
 }) {
   if (pageCount <= 1) return null
 
-  const base =
-    'min-w-[2rem] rounded-lg px-2.5 py-1.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-40'
+  // 원형 버튼(번호·화살표 공통)
+  const cell =
+    'grid h-8 w-8 place-items-center rounded-full text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-40'
 
   return (
     <nav className="mt-3 flex items-center justify-center gap-1" aria-label="페이지 이동">
       <button
         type="button"
-        className={`${base} text-gray-500 hover:bg-gray-100`}
+        className={`${cell} border border-gray-300 bg-white text-gray-500 hover:bg-gray-50`}
         onClick={() => onChange(page - 1)}
         disabled={page <= 1}
+        aria-label="이전"
       >
-        이전
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className="h-4 w-4">
+          <path d="M14 6l-6 6 6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
       </button>
 
       {pageItems(page, pageCount).map((item, i) =>
@@ -52,7 +56,7 @@ export function Pagination({
             key={item}
             type="button"
             aria-current={item === page ? 'page' : undefined}
-            className={`${base} ${
+            className={`${cell} ${
               item === page ? 'bg-brand-500 text-white' : 'text-gray-600 hover:bg-gray-100'
             }`}
             onClick={() => onChange(item)}
@@ -64,11 +68,14 @@ export function Pagination({
 
       <button
         type="button"
-        className={`${base} text-gray-500 hover:bg-gray-100`}
+        className={`${cell} border border-gray-300 bg-white text-gray-500 hover:bg-gray-50`}
         onClick={() => onChange(page + 1)}
         disabled={page >= pageCount}
+        aria-label="다음"
       >
-        다음
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className="h-4 w-4">
+          <path d="M10 6l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
       </button>
     </nav>
   )

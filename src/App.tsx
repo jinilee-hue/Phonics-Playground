@@ -7,6 +7,7 @@ import { BackgroundMusic } from './components/BackgroundMusic'
 import { TopBar } from './components/TopBar'
 import { GalleryPage } from './pages/GalleryPage'
 import { LoginPage } from './pages/LoginPage'
+import { useViewMode } from './viewMode'
 import bgVideo from './assets/playground-bg.mp4'
 
 /** /stats는 recharts(무거운 차트 라이브러리)를 포함 → 관리자 진입 시에만 로드(코드 스플릿). */
@@ -24,15 +25,23 @@ function Protected({ roles, children }: { roles: Role[]; children: ReactNode }) 
 function Shell({ children }: { children: ReactNode }) {
   const { data: me } = useMe()
   const location = useLocation()
+  const viewMode = useViewMode()
   if (!me) return null
-  // 갤러리는 하단 바(푸터 문구 + 페이지 인디케이터)를 자체적으로 렌더 → 전역 footer 생략.
   const onGallery = location.pathname === '/gallery'
+  // 카드형 갤러리만 뷰포트 높이로 고정(스크롤 없이 한 화면). 리스트형은 세로 스크롤 대시보드.
+  const galleryCardView = onGallery && viewMode === 'gallery'
+  // 리스트형 대시보드 — 전체 영상 배경 대신 밝은 페이지 위에 흰색 콘텐츠(Figma 참고).
+  const galleryListView = onGallery && viewMode === 'list'
   return (
-    // 갤러리는 셸 높이를 뷰포트로 고정 → 낮은 화면에서 카드가 flex로 줄어 스크롤 없이 한 화면.
-    <div className={`app-shell${onGallery ? ' app-shell-fixed' : ''}`}>
+    <div
+      className={`app-shell${galleryCardView ? ' app-shell-fixed' : ''}${
+        galleryListView ? ' app-shell-dash' : ''
+      }`}
+    >
       <TopBar user={me} />
       {children}
-      {!onGallery && <AppFooter />}
+      {/* 카드형 갤러리는 자체 하단 바를 렌더 → 전역 footer 생략. 그 외(리스트형·통계)는 전역 footer. */}
+      {!galleryCardView && <AppFooter />}
     </div>
   )
 }
