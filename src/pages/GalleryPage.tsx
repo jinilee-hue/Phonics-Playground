@@ -34,6 +34,20 @@ function useColumns(): number {
   return cols
 }
 
+/** 모바일(≤820px)에선 카드형을 가로 페이징 대신 세로 스크롤 그리드로 전환한다. */
+function useCardsMobile(): boolean {
+  const q = '(max-width: 820px)'
+  const [m, setM] = useState(() => typeof window !== 'undefined' && window.matchMedia(q).matches)
+  useEffect(() => {
+    const mq = window.matchMedia(q)
+    const on = () => setM(mq.matches)
+    on()
+    mq.addEventListener('change', on)
+    return () => mq.removeEventListener('change', on)
+  }, [])
+  return m
+}
+
 /**
  * 페이지(perPage열 × 2행) 단위로 "행 우선"(윗줄을 가로로 먼저 채우고 아랫줄) 배치용으로 재배열한다.
  * 그리드가 열 우선(grid-auto-flow: column, 2행)이라 열마다 [윗줄, 아랫줄] 순으로 넣는다.
@@ -95,6 +109,7 @@ export function GalleryPage() {
 
   // 캐러셀 계산 — 2행이므로 열 개수 = ceil(항목/2). 한 페이지 = perPage(열) × 2행.
   const perPage = useColumns()
+  const cardsMobile = useCardsMobile()
   const numCols = Math.ceil(filtered.length / 2)
   const pageCount = Math.max(1, Math.ceil(numCols / perPage))
 
@@ -312,13 +327,17 @@ export function GalleryPage() {
 
       {/* 카드형 — 페이지 캐러셀 */}
       {filtered.length > 0 && viewMode === 'gallery' && (
-        <div className="gallery-viewport" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+        <div
+          className="gallery-viewport"
+          onTouchStart={cardsMobile ? undefined : onTouchStart}
+          onTouchEnd={cardsMobile ? undefined : onTouchEnd}
+        >
           <div
             ref={trackRef}
             className="gallery-track"
-            style={{ transform: `translateX(${-offset}px)` }}
+            style={cardsMobile ? undefined : { transform: `translateX(${-offset}px)` }}
           >
-            {displayItems.map((item, i) =>
+            {(cardsMobile ? filtered : displayItems).map((item, i) =>
               item ? (
                 <div className="gallery-cell" key={item.id}>
                   <GameCard item={item} onPlay={(it) => setActiveId(it.id)} />
@@ -339,7 +358,7 @@ export function GalleryPage() {
             <p className="app-footer-copy">{t('footer.copyright')}</p>
           </div>
 
-          {effectivePageCount > 1 && (
+          {!cardsMobile && effectivePageCount > 1 && (
             <div className="gallery-pager">
               <button
                 type="button"
