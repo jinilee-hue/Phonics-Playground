@@ -139,6 +139,9 @@ export function TopBar({ user }: { user: User }) {
             </span>
             {user.name} <b>{t(ROLE_KEY[user.role])}</b>
           </span>
+        </div>
+        {/* 아이콘 액션 그룹 — 로고와 같은 줄(모바일 포함)에 우측 정렬. 셀렉트/배지와 분리 */}
+        <div className="app-actions">
           {/* 리스트형에서 통계 진입 — 그래프 아이콘(설정 버튼 앞, 관리자만). 라우트 이동 없이 모달 */}
           {onGallery && viewMode === 'list' && user.role === 'admin' && (
             <button

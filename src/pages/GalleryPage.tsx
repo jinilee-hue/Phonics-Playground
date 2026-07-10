@@ -34,9 +34,10 @@ function useColumns(): number {
   return cols
 }
 
-/** 모바일(≤820px)에선 카드형을 가로 페이징 대신 세로 스크롤 그리드로 전환한다. */
+/** 모바일(≤820px) 또는 세로 방향(portrait, 예: 태블릿 세로)에선
+ *  카드형을 가로 페이징 대신 세로 스크롤 그리드로 전환한다(카드가 세로로 늘어나는 것 방지). */
 function useCardsMobile(): boolean {
-  const q = '(max-width: 820px)'
+  const q = '(max-width: 820px), (orientation: portrait)'
   const [m, setM] = useState(() => typeof window !== 'undefined' && window.matchMedia(q).matches)
   useEffect(() => {
     const mq = window.matchMedia(q)

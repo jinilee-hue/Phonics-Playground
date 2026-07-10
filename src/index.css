@@ -380,6 +380,14 @@ button:disabled {
   white-space: nowrap;
 }
 
+/* 아이콘 액션 그룹(통계·뷰전환·설정·로그아웃) — 셀렉트/배지와 분리. 기본은 우측 인라인 */
+.app-actions {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 12px;
+}
+
 .app-user-badge {
   display: inline-flex;
   flex-shrink: 0;
@@ -2594,13 +2602,78 @@ img.phonics-thumb,
   }
 }
 
-/* 좁은 폰 — 카드형 헤더(레벨·학습 셀렉트 포함)가 넘치지 않게 우측 메뉴를 줄바꿈 + 아이콘 축소 */
+/* 세로 방향(태블릿 세로 포함) — 카드형을 세로 스크롤 그리드로(가로 landscape 캐러셀과 분리).
+   flex-fill이 없으므로 카드가 자연 높이 → 세로로 길쭉해지지 않음. */
+@media (orientation: portrait) {
+  .app-shell-fixed {
+    height: auto;
+    min-height: 100dvh;
+    overflow: visible;
+  }
+
+  .gallery-viewport {
+    overflow: visible;
+    margin-right: 0;
+    padding: 0.5rem 0 1rem;
+  }
+
+  .gallery-track {
+    grid-auto-flow: row;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: none;
+    grid-auto-columns: auto;
+    transform: none !important;
+    transition: none;
+  }
+}
+
+/* 넓은 세로(태블릿 세로) — 3열로 카드 크기·개수 균형 */
+@media (orientation: portrait) and (min-width: 900px) {
+  .gallery-track {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* 좁은 세로(폰) — 1열 */
+@media (orientation: portrait) and (max-width: 560px) {
+  .gallery-track {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* 카드형 태블릿 세로·폰(≤820) — 사용자 배지 숨겨 헤더가 한 줄(+nav)로 유지되게 */
+@media (max-width: 820px) {
+  .app-shell-fixed .app-user-badge {
+    display: none;
+  }
+}
+
+/* 카드형 폰(≤600) — 아이콘은 로고와 같은 줄(우측)로, 셀렉트는 그 아래 한 줄(각 절반) */
 @media (max-width: 600px) {
-  .app-shell-fixed .app-user-menu {
-    flex-wrap: wrap;
-    justify-content: flex-end;
+  .app-shell-fixed .app-brand-logo {
+    height: 42px;
+  }
+  /* 아이콘 그룹을 로고 줄 우측으로 */
+  .app-shell-fixed .app-actions {
+    order: 1;
+    margin-left: auto;
     gap: 6px;
   }
+  /* 셀렉트 묶음은 다음 줄 전체 */
+  .app-shell-fixed .app-user-menu {
+    order: 2;
+    flex-basis: 100%;
+    justify-content: flex-start;
+    gap: 8px;
+  }
+  .app-shell-fixed .app-user-menu .cs-wrap {
+    flex: 1 1 46%;
+    min-width: 0;
+  }
+  .app-shell-fixed .app-user-menu .cs-trigger {
+    width: 100%;
+  }
+  /* 아이콘 버튼 축소 */
   .app-shell-fixed .app-logout,
   .app-shell-fixed .app-settings {
     width: 40px;
@@ -2613,10 +2686,10 @@ img.phonics-thumb,
   }
 }
 
-/* 태블릿·PC(가로 ≥1000px): 갤러리가 화면 높이를 꽉 채운다(빈 여백·스크롤 없음).
+/* 가로 방향 태블릿·PC(≥1000px): 갤러리가 화면 높이를 꽉 채운다(빈 여백·스크롤 없음).
    썸네일이 남는 높이를 flex로 채워, 뷰포트가 높으면 카드가 커지고 낮으면 작아진다.
-   기본 카드 규칙보다 뒤에 와야 우선 적용됨(미디어쿼리는 특이도를 올리지 않음). */
-@media (min-width: 1000px) {
+   ⚠️ 세로(portrait)에는 적용하지 않는다 — 세로로 긴 화면에서 카드가 과도하게 길쭉해지므로. */
+@media (min-width: 1000px) and (orientation: landscape) {
   .gallery-page {
     display: flex;
     flex: 1;
@@ -2664,7 +2737,7 @@ img.phonics-thumb,
 }
 
 /* 세로가 낮은 태블릿(가로 모드): 헤더·푸터 사이 여백을 최대한 줄여 리스트 높이(썸네일)를 키움 */
-@media (max-height: 820px) and (min-width: 1000px) {
+@media (max-height: 820px) and (min-width: 1000px) and (orientation: landscape) {
   .gallery-page {
     padding: 8px 0;
   }
