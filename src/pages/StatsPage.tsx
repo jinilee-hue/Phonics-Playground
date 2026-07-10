@@ -317,7 +317,7 @@ function BreakdownDonut({
           아직 집계된 데이터가 없습니다.
         </div>
       ) : (
-        <div className="relative flex items-center justify-center">
+        <div className="flex flex-col items-center justify-center gap-3 sm:relative sm:flex-row sm:gap-0">
           <div className="relative w-[210px] shrink-0">
             <DonutCenter label="총 콘텐츠" value={`${total}개`} />
             <ResponsiveContainer width="100%" height={230}>
@@ -343,7 +343,7 @@ function BreakdownDonut({
             </ResponsiveContainer>
           </div>
           {/* 범례: 도넛 정중앙 기준 오른쪽 32px(원 반지름 96 + 32) 지점에 배치 */}
-          <div className="absolute left-1/2 top-1/2 ml-[128px] -translate-y-1/2">
+          <div className="sm:absolute sm:left-1/2 sm:top-1/2 sm:ml-[128px] sm:-translate-y-1/2">
             <DonutLegend items={data.map((d, i) => ({ label: d.label, color: fillOf(d, i) }))} />
           </div>
         </div>
@@ -675,7 +675,7 @@ export function StatsPage() {
                   </PieChart>
                 </ResponsiveContainer>
               </div>
-              <div className="absolute left-1/2 top-1/2 ml-[128px] -translate-y-1/2">
+              <div className="sm:absolute sm:left-1/2 sm:top-1/2 sm:ml-[128px] sm:-translate-y-1/2">
                 <DonutLegend
                   items={kindData.map((d) => ({ label: d.name, color: KIND_CHART_COLOR[d.kind] }))}
                 />

@@ -124,6 +124,22 @@ button:disabled {
   box-shadow: 0 2px 16px rgb(15 23 42 / 0.08);
 }
 
+/* 모바일 리스트형 — 스크롤 전에도 프로스티드 바 + 좌측 로고 노출(아이콘 가독성·정돈감) */
+@media (max-width: 600px) {
+  .app-shell-dash .app-topbar {
+    background: rgb(255 255 255 / 0.8);
+    backdrop-filter: blur(12px) saturate(1.1);
+    box-shadow: 0 2px 16px rgb(15 23 42 / 0.08);
+  }
+  .app-shell-dash .app-brand-hidden {
+    visibility: visible;
+  }
+  /* 헤더가 로고를 담당하므로 히어로 큰 로고는 숨겨 중복 제거(기본 규칙보다 특이도 높임) */
+  .app-shell-dash .dash-hero-logo {
+    display: none;
+  }
+}
+
 /* 통계 모달(리스트형에서 그래프 아이콘 클릭 시) */
 .stats-modal-overlay {
   position: fixed;
@@ -1016,6 +1032,9 @@ main.stats-page table:not([class*='border-separate']) td {
   display: flex;
   flex-direction: column;
   gap: 2.4rem;
+  /* 히어로 캐릭터가 우측으로 넘쳐도 페이지 가로 스크롤이 생기지 않게 가로만 클립(세로 스필은 유지).
+     clip은 반대 축을 auto로 강제하지 않아 캐릭터가 히어로 아래로 삐져나오는 연출은 그대로 유지된다. */
+  overflow-x: clip;
 }
 
 /* 히어로는 풀블리드(전체 폭), 그 아래 콘텐츠 섹션만 가운데 정렬 + 폭 제한 */
@@ -1154,12 +1173,26 @@ main.stats-page table:not([class*='border-separate']) td {
 }
 
 @media (max-width: 720px) {
+  /* 폰 — 캐릭터를 작게 줄여 우측 하단에 노출(텍스트는 좌측으로 폭 제한해 겹침 최소화) */
   .dash-hero-chars {
-    display: none;
+    display: block;
+    height: 52%;
+    right: clamp(0.25rem, 1.5vw, 1rem);
+    bottom: clamp(-1.6rem, -2.5vw, -0.8rem);
+    transform: none;
   }
 
   .dash-hero-copy {
     max-width: 100%;
+  }
+
+  /* 캐릭터가 들어갈 우측 공간 확보 — 헤드라인·서브문구는 좌측 폭으로 래핑 */
+  .dash-hero-copy h1 {
+    max-width: 62%;
+  }
+
+  .dash-hero-copy p {
+    max-width: 60%;
   }
 
   .dash-hero-scrim {
@@ -1167,16 +1200,11 @@ main.stats-page table:not([class*='border-separate']) td {
   }
 }
 
-/* 태블릿(iPad Pro 가로 ~1536px 포함) — 히어로 캐릭터를 오른쪽으로 이동. 좁을수록 더 많이. */
-@media (min-width: 1001px) and (max-width: 1536px) {
+/* 태블릿(721~1536px, iPad Pro 가로 포함) — 히어로 캐릭터를 오른쪽으로 100px 이동.
+   200px는 좁은 태블릿에서 화면 밖으로 잘려서 100px로 통일(전 구간 잘림 없이 우측 배치). */
+@media (min-width: 721px) and (max-width: 1536px) {
   .dash-hero-chars {
     transform: translateX(100px);
-  }
-}
-
-@media (min-width: 721px) and (max-width: 1000px) {
-  .dash-hero-chars {
-    transform: translateX(200px);
   }
 }
 
@@ -2563,5 +2591,12 @@ img.phonics-thumb,
 
   .gallery-footerbar {
     margin-top: 0.35rem;
+  }
+}
+
+/* 초소형 폰 — 헤더 우측 아이콘(통계·전환·설정·로그아웃)이 들어가도록 사용자 배지를 숨김 */
+@media (max-width: 480px) {
+  .app-user-badge {
+    display: none;
   }
 }
