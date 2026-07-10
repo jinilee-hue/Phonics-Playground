@@ -988,6 +988,11 @@ main.stats-page table:not([class*='border-separate']) td {
   padding-bottom: calc(0.5rem + env(safe-area-inset-top));
 }
 
+/* 통계 헤더도 스크롤 배경이 위아래 대칭이 되도록 하단 패딩을 상단과 동일하게 */
+.app-shell-stats .app-topbar-inner {
+  padding-bottom: calc(0.5rem + env(safe-area-inset-top));
+}
+
 /* 리스트형 푸터 — 배너와 여백 + 구분선 + 안내·카피라이트 좌우 배치 */
 .app-shell-dash .app-footer {
   display: flex;

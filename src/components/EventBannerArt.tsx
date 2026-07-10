@@ -188,22 +188,14 @@ function ColorfulSong({ accent, label }: { accent: string; label: string }) {
       <ellipse cx={38} cy={58} rx={22} ry={3} fill={ink} opacity=".08" />
       <circle cx={27} cy={29} r={17} fill="#fff" />
 
-      {/* 8분음표 — 머리·줄기·깃 한 path로 연결 */}
-      <path
-        fill={ink}
-        d="M18.2 33
-           C18.2 28.4 22.1 24.5 26.8 24.5
-           C28.8 24.5 30.6 25.2 32 26.4
-           V15 H45 V21.5 H33.2 V27.5
-           C34.8 28.8 35.8 30.8 35.8 33
-           C35.8 37.8 31.4 41.5 26.8 41.5
-           C22.1 41.5 18.2 37.8 18.2 33 Z"
-      />
+      {/* 8분음표 — 원형 머리 + 줄기·깃 연결 */}
+      <circle cx={26.5} cy={33} r={6.5} fill={ink} />
+      <path fill={ink} d="M30.8 27 V15 H45 V21.5 H33.5 V32" />
 
-      {/* 망치 — 머리·손잡이 한 path로 연결 */}
+      {/* 망치 — 머리·손잡이 한 path (손잡이 짧게) */}
       <path
         fill={accent}
-        d="M44 16.5 Q44 14 46.5 14 H63.5 Q66 14 66 16.5 V20.5 Q66 23 63.5 23 H57.5 V46.5 Q57.5 49 55 49 Q52.5 49 52.5 46.5 V23 H46.5 Q44 23 44 20.5 V16.5 Z"
+        d="M44 16.5 Q44 14 46.5 14 H63.5 Q66 14 66 16.5 V20.5 Q66 23 63.5 23 H57.5 V37.5 Q57.5 40 55 40 Q52.5 40 52.5 37.5 V23 H46.5 Q44 23 44 20.5 V16.5 Z"
       />
 
       <text x={38} y={64} textAnchor="middle" className="event-banner-art-plain" fontSize="12" fontWeight="800">
