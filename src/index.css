@@ -1167,10 +1167,16 @@ main.stats-page table:not([class*='border-separate']) td {
   }
 }
 
-/* 태블릿 — 히어로 캐릭터를 오른쪽으로 100px 이동 */
-@media (min-width: 721px) and (max-width: 1280px) {
+/* 태블릿 — 히어로 캐릭터를 오른쪽으로 이동. 좁은 태블릿일수록 더 많이 이동. */
+@media (min-width: 1001px) and (max-width: 1280px) {
   .dash-hero-chars {
     transform: translateX(100px);
+  }
+}
+
+@media (min-width: 721px) and (max-width: 1000px) {
+  .dash-hero-chars {
+    transform: translateX(200px);
   }
 }
 

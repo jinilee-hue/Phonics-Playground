@@ -192,11 +192,11 @@ function ColorfulSong({ accent }: { accent: string }) {
       <circle cx={26.5} cy={33} r={6.5} fill={ink} />
       <path fill={ink} d="M30.8 27 V15 H45 V21.5 H33.5 V32" />
 
-      {/* 망치 — 손잡이 짧게, 음표에 가깝게 */}
+      {/* 망치 — 머리·손잡이 비율 맞춤 */}
       <path
         fill={accent}
-        transform="translate(-4 10)"
-        d="M44 16.5 Q44 14 46.5 14 H63.5 Q66 14 66 16.5 V20.5 Q66 23 63.5 23 H57.5 V30 Q57.5 32.5 55 32.5 Q52.5 32.5 52.5 30 V23 H46.5 Q44 23 44 20.5 V16.5 Z"
+        transform="translate(-5 10)"
+        d="M43 18.5 Q43 17 44.5 17 H57.5 Q59 17 59 18.5 V20.5 Q59 22 57.5 22 H55.25 V30 Q55.25 31.5 54 31.5 Q52.75 31.5 52.75 30 V22 H44.5 Q43 22 43 20.5 V18.5 Z"
       />
     </>
   )
