@@ -180,27 +180,24 @@ function ColorfulFish({ tailColor, label }: { tailColor: string; label: string }
   )
 }
 
-/** 컬러 배너 — 파닉스 송 (플랫: 흰 원 + 음표 + 보라 망치 + 글자) */
-function ColorfulSong({ accent, label }: { accent: string; label: string }) {
+/** 컬러 배너 — 파닉스 송 (플랫: 흰 원 + 음표 + 보라 망치) */
+function ColorfulSong({ accent }: { accent: string }) {
   const ink = '#191b23'
   return (
     <>
-      <ellipse cx={38} cy={58} rx={22} ry={3} fill={ink} opacity=".08" />
+      <ellipse cx={38} cy={54} rx={22} ry={3} fill={ink} opacity=".08" />
       <circle cx={27} cy={29} r={17} fill="#fff" />
 
       {/* 8분음표 — 원형 머리 + 줄기·깃 연결 */}
       <circle cx={26.5} cy={33} r={6.5} fill={ink} />
       <path fill={ink} d="M30.8 27 V15 H45 V21.5 H33.5 V32" />
 
-      {/* 망치 — 머리·손잡이 한 path (손잡이 짧게) */}
+      {/* 망치 — 머리·손잡이 한 path */}
       <path
         fill={accent}
+        transform="translate(0 6)"
         d="M44 16.5 Q44 14 46.5 14 H63.5 Q66 14 66 16.5 V20.5 Q66 23 63.5 23 H57.5 V37.5 Q57.5 40 55 40 Q52.5 40 52.5 37.5 V23 H46.5 Q44 23 44 20.5 V16.5 Z"
       />
-
-      <text x={38} y={64} textAnchor="middle" className="event-banner-art-plain" fontSize="12" fontWeight="800">
-        {label}
-      </text>
     </>
   )
 }
@@ -266,7 +263,7 @@ function MotifIcon({ spec, palette }: { spec: BannerSpec; palette: BannerPalette
       )
     case 'song':
       if (spec.accent) {
-        return <ColorfulSong accent={spec.accent} label={spec.label} />
+        return <ColorfulSong accent={spec.accent} />
       }
       return (
         <>

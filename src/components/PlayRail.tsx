@@ -1,11 +1,14 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { GalleryItem } from '../api/types'
 import { useT } from '../i18n'
 import { PlayCard } from './GameCard'
 
 /**
  * "영역별 맞춤 파닉스 놀이" 가로 레일 — 레벨 탭(전체 레벨·ECP1…) + 한 줄 가로 스크롤.
- * 헤더 우측 ‹ › 버튼은 끝에서 반대쪽으로 순환(루프)한다. 태블릿은 좌우 손가락 스와이프로 이동.
+ *
+ * 무한 루프: 목록이 넘칠 때 카드를 3벌 복제해 렌더하고 스크롤을 항상 가운데 벌에 둔다.
+ * 스크롤이 멈추면(‹›/스와이프 모두) 위치를 한 벌 폭만큼 순간 이동해 가운데로 되돌린다 —
+ * 세 벌이 동일해 이음매가 보이지 않으므로 끝↔처음이 자연스럽게 연결된다. 태블릿은 좌우 스와이프.
  */
 export function PlayRail({
   title,
@@ -28,39 +31,87 @@ export function PlayRail({
   const railRef = useRef<HTMLDivElement>(null)
   const [overflowing, setOverflowing] = useState(false)
 
-  const update = useCallback(() => {
+  const copyWidthRef = useRef(0) // 카드 한 벌(복제 1세트)의 스크롤 폭
+  const loopRef = useRef(false) // 스크롤 핸들러에서 최신 loop 값 참조용
+  const settleTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+
+  const loop = overflowing
+  loopRef.current = loop
+
+  // 카드 한 벌 폭 측정 + 넘침 여부 판정. 복제본이 있으면 두 벌 사이 간격으로 정확히 산출.
+  const measure = useCallback(() => {
     const el = railRef.current
     if (!el) return
-    setOverflowing(el.scrollWidth > el.clientWidth + 4)
-  }, [])
+    const kids = el.children
+    const n = items.length
+    if (n === 0 || kids.length === 0) {
+      copyWidthRef.current = 0
+      setOverflowing(false)
+      return
+    }
+    let single: number
+    if (kids.length >= 2 * n) {
+      // 3벌 렌더 상태 — 두 번째 벌 첫 카드 offset - 첫 벌 첫 카드 offset = 한 벌 폭
+      single = (kids[n] as HTMLElement).offsetLeft - (kids[0] as HTMLElement).offsetLeft
+    } else {
+      // 1벌만 렌더 — 마지막 카드 우측 - 첫 카드 좌측(마지막 간격 제외, 넘침 판정엔 충분)
+      const last = kids[kids.length - 1] as HTMLElement
+      single = last.offsetLeft + last.offsetWidth - (kids[0] as HTMLElement).offsetLeft
+    }
+    copyWidthRef.current = single
+    setOverflowing(single > el.clientWidth + 4)
+  }, [items.length])
 
+  // 측정 후 loop면 가운데 벌로 스크롤 위치를 옮긴다(플래시 방지 위해 paint 전에).
+  const layout = useCallback(() => {
+    const el = railRef.current
+    if (!el) return
+    measure()
+    el.scrollLeft = loopRef.current && copyWidthRef.current > 0 ? copyWidthRef.current : 0
+  }, [measure])
+
+  // 목록/레벨/loop 변경 시 재측정·재배치. loop가 바뀌면(복제본 수 변화) 다시 실행돼 수렴.
+  useLayoutEffect(() => {
+    const raf = requestAnimationFrame(layout)
+    window.addEventListener('resize', layout)
+    return () => {
+      cancelAnimationFrame(raf)
+      window.removeEventListener('resize', layout)
+    }
+  }, [layout, loop, items.length, activeLevel])
+
+  // 스크롤이 멈추면 가운데 벌 범위[w, 2w)로 순간 정규화 → 끝/처음이 이어져 보임(복제본 동일).
   useEffect(() => {
     const el = railRef.current
     if (!el) return
-    // 레벨 탭이 바뀌면 목록이 바뀌므로 스크롤을 처음으로 되돌리고 재측정
-    el.scrollLeft = 0
-    const raf = requestAnimationFrame(update)
-    window.addEventListener('resize', update)
-    return () => {
-      cancelAnimationFrame(raf)
-      window.removeEventListener('resize', update)
+    const normalize = () => {
+      if (!loopRef.current) return
+      const w = copyWidthRef.current
+      if (w <= 0) return
+      let x = el.scrollLeft
+      if (x >= 2 * w) x -= w
+      else if (x < w) x += w
+      if (x !== el.scrollLeft) el.scrollLeft = x // 즉시(비애니메이션) — 눈에 안 띔
     }
-  }, [update, items.length, activeLevel])
+    const onScroll = () => {
+      clearTimeout(settleTimer.current)
+      settleTimer.current = setTimeout(normalize, 120)
+    }
+    el.addEventListener('scroll', onScroll, { passive: true })
+    return () => {
+      el.removeEventListener('scroll', onScroll)
+      clearTimeout(settleTimer.current)
+    }
+  }, [])
 
-  // ‹ › 이동 — 끝에 닿으면 반대쪽 끝으로 순환(무한 루프처럼 계속 넘길 수 있음)
+  // ‹ › 이동 — 한 화면의 90%씩. 멈추면 위 정규화가 가운데로 되돌려 무한 루프처럼 이어진다.
   const move = (dir: 1 | -1) => {
     const el = railRef.current
     if (!el) return
-    const max = el.scrollWidth - el.clientWidth
-    const step = el.clientWidth * 0.9
-    if (dir === 1) {
-      if (el.scrollLeft >= max - 4) el.scrollTo({ left: 0, behavior: 'smooth' })
-      else el.scrollBy({ left: step, behavior: 'smooth' })
-    } else {
-      if (el.scrollLeft <= 4) el.scrollTo({ left: max, behavior: 'smooth' })
-      else el.scrollBy({ left: -step, behavior: 'smooth' })
-    }
+    el.scrollBy({ left: dir * el.clientWidth * 0.9, behavior: 'smooth' })
   }
+
+  const rendered = loop ? [0, 1, 2].flatMap((c) => items.map((item) => ({ item, c }))) : items.map((item) => ({ item, c: 0 }))
 
   return (
     <section className="dash-section dash-section-bleed">
@@ -137,8 +188,8 @@ export function PlayRail({
       </header>
 
       <div className="dash-rail" ref={railRef}>
-        {items.map((item) => (
-          <PlayCard key={item.id} item={item} onPlay={onPlay} />
+        {rendered.map(({ item, c }) => (
+          <PlayCard key={`${c}-${item.id}`} item={item} onPlay={onPlay} />
         ))}
       </div>
     </section>
