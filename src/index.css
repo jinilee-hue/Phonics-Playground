@@ -116,8 +116,9 @@ button:disabled {
     backdrop-filter 0.2s ease;
 }
 
-/* 리스트형 — 스크롤 내리면 헤더에 반투명 흰 배경 */
-.app-shell-dash .app-topbar.is-scrolled {
+/* 리스트형·통계 — 스크롤 내리면 헤더에 반투명 흰 배경 */
+.app-shell-dash .app-topbar.is-scrolled,
+.app-shell-stats .app-topbar.is-scrolled {
   background: rgb(255 255 255 / 0.8);
   backdrop-filter: blur(12px) saturate(1.1);
   box-shadow: 0 2px 16px rgb(15 23 42 / 0.08);

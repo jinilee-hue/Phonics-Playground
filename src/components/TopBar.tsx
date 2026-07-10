@@ -177,12 +177,9 @@ export function TopBar({ user }: { user: User }) {
                   <rect x="13.5" y="13.5" width="7" height="7" rx="1.6" stroke="currentColor" strokeWidth="2" />
                 </svg>
               ) : (
-                // 리스트형으로 전환 — 리스트 아이콘
+                // 리스트형으로 전환 — 라인 3개 아이콘
                 <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
-                  <path d="M8 6h12M8 12h12M8 18h12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                  <circle cx="4" cy="6" r="1.4" fill="currentColor" />
-                  <circle cx="4" cy="12" r="1.4" fill="currentColor" />
-                  <circle cx="4" cy="18" r="1.4" fill="currentColor" />
+                  <path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                 </svg>
               )}
             </button>

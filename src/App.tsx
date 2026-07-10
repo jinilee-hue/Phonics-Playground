@@ -28,6 +28,7 @@ function Shell({ children }: { children: ReactNode }) {
   const viewMode = useViewMode()
   if (!me) return null
   const onGallery = location.pathname === '/gallery'
+  const onStats = location.pathname === '/stats'
   // 카드형 갤러리만 뷰포트 높이로 고정(스크롤 없이 한 화면). 리스트형은 세로 스크롤 대시보드.
   const galleryCardView = onGallery && viewMode === 'gallery'
   // 리스트형 대시보드 — 전체 영상 배경 대신 밝은 페이지 위에 흰색 콘텐츠(Figma 참고).
@@ -36,7 +37,7 @@ function Shell({ children }: { children: ReactNode }) {
     <div
       className={`app-shell${galleryCardView ? ' app-shell-fixed' : ''}${
         galleryListView ? ' app-shell-dash' : ''
-      }`}
+      }${onStats ? ' app-shell-stats' : ''}`}
     >
       <TopBar user={me} />
       {children}
