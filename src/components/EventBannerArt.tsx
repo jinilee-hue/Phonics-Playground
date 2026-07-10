@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import type { GalleryItem } from '../api/types'
 
 type BannerMotif =
@@ -93,31 +94,52 @@ function blockLabelFill(palette: BannerPalette, tone: BlockTone): string {
   return tone === 'surface' ? palette.ink : palette.surface
 }
 
+/** 배너 아이콘 공통 그리드 — 48×40 영역, 중심 (44, 36) */
+const ART_GRID = { cx: 44, cy: 36, ox: 20, oy: 12, scale: 1.18, localCx: 24, localCy: 20 }
+
+function BannerIconShadow() {
+  return <ellipse cx={ART_GRID.cx} cy={56} rx={22} ry={2.5} fill="#191b23" opacity=".08" />
+}
+
+function BannerIconScaled({ children, offsetY = 2 }: { children: ReactNode; offsetY?: number }) {
+  const { ox, oy, scale, localCx, localCy } = ART_GRID
+  return (
+    <g
+      transform={`translate(${ox} ${oy + offsetY}) translate(${localCx} ${localCy}) scale(${scale}) translate(${-localCx} ${-localCy})`}
+    >
+      {children}
+    </g>
+  )
+}
+
 /** 컬러 배너 — 알파벳 사운드 매칭 (A·b·C 블록) */
 function ColorfulAlphabetBlocks({ accent }: { accent: string }) {
   return (
     <>
-      <g transform="rotate(11 54 30)">
-        <ellipse cx={54} cy={47} rx={12} ry={2.5} fill="#191b23" opacity=".09" />
-        <rect x={42} y={22} width={24} height={24} rx={7} fill={accent} />
-        <text x={54} y={40} textAnchor="middle" className="event-banner-art-plain" fill="#fff" fontSize="15">
-          b
-        </text>
-      </g>
-      <g transform="rotate(-11 18 34)">
-        <ellipse cx={18} cy={51} rx={11} ry={2.5} fill="#191b23" opacity=".09" />
-        <rect x={6} y={28} width={24} height={24} rx={7} fill="#fff" />
-        <text x={18} y={46} textAnchor="middle" className="event-banner-art-plain" fontSize="15">
-          A
-        </text>
-      </g>
-      <g transform="rotate(-2 36 58)">
-        <ellipse cx={36} cy={73} rx={12} ry={2.5} fill="#191b23" opacity=".09" />
-        <rect x={24} y={50} width={24} height={22} rx={7} fill="#fff" />
-        <text x={36} y={66} textAnchor="middle" className="event-banner-art-plain" fontSize="15">
-          C
-        </text>
-      </g>
+      <BannerIconShadow />
+      <BannerIconScaled offsetY={0}>
+        <g transform="rotate(10 36 14)">
+          <ellipse cx={36} cy={31} rx={10} ry={2} fill="#191b23" opacity=".09" />
+          <rect x={24} y={6} width={22} height={22} rx={6} fill={accent} />
+          <text x={35} y={22} textAnchor="middle" className="event-banner-art-plain" fill="#fff" fontSize="14">
+            b
+          </text>
+        </g>
+        <g transform="rotate(-10 10 18)">
+          <ellipse cx={10} cy={35} rx={10} ry={2} fill="#191b23" opacity=".09" />
+          <rect x={0} y={12} width={22} height={22} rx={6} fill="#fff" />
+          <text x={11} y={28} textAnchor="middle" className="event-banner-art-plain" fontSize="14">
+            A
+          </text>
+        </g>
+        <g transform="rotate(-2 22 30)">
+          <ellipse cx={22} cy={43} rx={10} ry={2} fill="#191b23" opacity=".09" />
+          <rect x={10} y={26} width={22} height={20} rx={6} fill="#fff" />
+          <text x={21} y={41} textAnchor="middle" className="event-banner-art-plain" fontSize="14">
+            C
+          </text>
+        </g>
+      </BannerIconScaled>
     </>
   )
 }
@@ -126,36 +148,39 @@ function ColorfulAlphabetBlocks({ accent }: { accent: string }) {
 function ColorfulCaseMatch({ accent }: { accent: string }) {
   return (
     <>
-      <g transform="rotate(-8 20 36)">
-        <ellipse cx={20} cy={52} rx={11} ry={2.5} fill="#191b23" opacity=".09" />
-        <rect x={8} y={30} width={24} height={24} rx={7} fill="#fff" />
-        <text x={20} y={48} textAnchor="middle" className="event-banner-art-plain" fontSize="15">
-          A
-        </text>
-      </g>
-      <path
-        d="M34 40h10"
-        stroke="#191b23"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-        opacity=".35"
-      />
-      <path
-        d="M42 36l4 4-4 4"
-        fill="none"
-        stroke="#191b23"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        opacity=".35"
-      />
-      <g transform="rotate(8 56 36)">
-        <ellipse cx={56} cy={52} rx={11} ry={2.5} fill="#191b23" opacity=".09" />
-        <rect x={44} y={30} width={24} height={24} rx={7} fill={accent} />
-        <text x={56} y={48} textAnchor="middle" className="event-banner-art-plain" fill="#fff" fontSize="15">
-          a
-        </text>
-      </g>
+      <BannerIconShadow />
+      <BannerIconScaled offsetY={4}>
+        <g transform="rotate(-8 10 20)">
+          <ellipse cx={10} cy={36} rx={10} ry={2} fill="#191b23" opacity=".09" />
+          <rect x={0} y={14} width={22} height={22} rx={6} fill="#fff" />
+          <text x={11} y={30} textAnchor="middle" className="event-banner-art-plain" fontSize="14">
+            A
+          </text>
+        </g>
+        <path
+          d="M24 24h8"
+          stroke="#191b23"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          opacity=".35"
+        />
+        <path
+          d="M30 20l3 4-3 4"
+          fill="none"
+          stroke="#191b23"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          opacity=".35"
+        />
+        <g transform="rotate(8 36 20)">
+          <ellipse cx={36} cy={36} rx={10} ry={2} fill="#191b23" opacity=".09" />
+          <rect x={26} y={14} width={22} height={22} rx={6} fill={accent} />
+          <text x={37} y={30} textAnchor="middle" className="event-banner-art-plain" fill="#fff" fontSize="14">
+            a
+          </text>
+        </g>
+      </BannerIconScaled>
     </>
   )
 }
@@ -165,17 +190,19 @@ function ColorfulFish({ tailColor, label }: { tailColor: string; label: string }
   const ink = '#191b23'
   return (
     <>
-      <ellipse cx={40} cy={58} rx={22} ry={3} fill={ink} opacity=".08" />
-      <path d="M10 38 2 30v16Z" fill={tailColor} />
-      <ellipse cx={38} cy={38} rx={28} ry={20} fill="#fff" />
-      <path
-        d="M12 38c0-14 52-14 64 0-10 6-28 8-40 4-8-2-14-4-24-4Z"
-        fill="#6dd3cf"
-      />
-      <circle cx={58} cy={34} r={2.5} fill={ink} />
-      <text x={38} y={42} textAnchor="middle" className="event-banner-art-plain" fill={ink} fontSize="14">
-        {label}
-      </text>
+      <BannerIconShadow />
+      <BannerIconScaled>
+        <path d="M2 24 0 18v12Z" fill={tailColor} />
+        <ellipse cx={22} cy={20} rx={22} ry={16} fill="#fff" />
+        <path
+          d="M4 20c0-11 36-11 44 0-7 5-19 6-28 3-6-2-11-3-16-3Z"
+          fill="#6dd3cf"
+        />
+        <circle cx={38} cy={17} r={2.5} fill={ink} />
+        <text x={22} y={23} textAnchor="middle" className="event-banner-art-plain" fill={ink} fontSize="13">
+          {label}
+        </text>
+      </BannerIconScaled>
     </>
   )
 }
@@ -185,19 +212,20 @@ function ColorfulSong({ accent }: { accent: string }) {
   const ink = '#191b23'
   return (
     <>
-      <ellipse cx={38} cy={54} rx={22} ry={3} fill={ink} opacity=".08" />
-      <circle cx={27} cy={29} r={17} fill="#fff" />
-
-      {/* 8분음표 — 원형 머리 + 줄기·깃 연결 */}
-      <circle cx={26.5} cy={33} r={6.5} fill={ink} />
-      <path fill={ink} d="M30.8 27 V15 H45 V21.5 H33.5 V32" />
-
-      {/* 망치 — 머리·손잡이 비율 맞춤 */}
-      <path
-        fill={accent}
-        transform="translate(-5 10)"
-        d="M43 18.5 Q43 17 44.5 17 H57.5 Q59 17 59 18.5 V20.5 Q59 22 57.5 22 H55.25 V30 Q55.25 31.5 54 31.5 Q52.75 31.5 52.75 30 V22 H44.5 Q43 22 43 20.5 V18.5 Z"
-      />
+      <BannerIconShadow />
+      <BannerIconScaled>
+        <g>
+          <circle cx={14} cy={14} r={13} fill="#fff" />
+          <circle cx={12.5} cy={16} r={5.5} fill={ink} />
+          <path fill={ink} d="M16 11 V4 H26 V9 H17.5 V17" />
+        </g>
+        <g transform="translate(21 22)">
+          <path
+            fill={accent}
+            d="M0 2 Q0 0.5 1.2 0.5 H12.8 Q14 0.5 14 2 V4 Q14 5 12.8 5 H9.5 V13 Q9.5 14 7 14 Q4.5 14 4.5 13 V5 H1.2 Q0 5 0 4 V2 Z"
+          />
+        </g>
+      </BannerIconScaled>
     </>
   )
 }
