@@ -7,7 +7,7 @@ import { useLogout } from '../auth/auth'
 import { LevelSelect } from './LevelSelect'
 import { SettingsModal } from './SettingsModal'
 import { StatsModal } from './StatsModal'
-import { useViewMode } from '../viewMode'
+import { setViewMode, useViewMode } from '../viewMode'
 import { useLang, useT } from '../i18n'
 import { translateContent } from '../contentI18n'
 import logoUrl from '../assets/logo.png'
@@ -157,6 +157,34 @@ export function TopBar({ user }: { user: User }) {
                   strokeLinecap="round"
                 />
               </svg>
+            </button>
+          )}
+          {/* 리스트형/카드형 전환 — 설정 버튼 앞. 현재의 반대 뷰 아이콘(=전환 대상)을 노출 */}
+          {onGallery && (
+            <button
+              type="button"
+              onClick={() => setViewMode(viewMode === 'list' ? 'gallery' : 'list')}
+              className="app-settings"
+              aria-label={t(viewMode === 'list' ? 'view.gallery' : 'view.list')}
+              title={t(viewMode === 'list' ? 'view.gallery' : 'view.list')}
+            >
+              {viewMode === 'list' ? (
+                // 카드형으로 전환 — 그리드(카드) 아이콘
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
+                  <rect x="3.5" y="3.5" width="7" height="7" rx="1.6" stroke="currentColor" strokeWidth="2" />
+                  <rect x="13.5" y="3.5" width="7" height="7" rx="1.6" stroke="currentColor" strokeWidth="2" />
+                  <rect x="3.5" y="13.5" width="7" height="7" rx="1.6" stroke="currentColor" strokeWidth="2" />
+                  <rect x="13.5" y="13.5" width="7" height="7" rx="1.6" stroke="currentColor" strokeWidth="2" />
+                </svg>
+              ) : (
+                // 리스트형으로 전환 — 리스트 아이콘
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
+                  <path d="M8 6h12M8 12h12M8 18h12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                  <circle cx="4" cy="6" r="1.4" fill="currentColor" />
+                  <circle cx="4" cy="12" r="1.4" fill="currentColor" />
+                  <circle cx="4" cy="18" r="1.4" fill="currentColor" />
+                </svg>
+              )}
             </button>
           )}
           <button
